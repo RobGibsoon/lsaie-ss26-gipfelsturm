@@ -31,7 +31,7 @@ case $MODE in
         EVAL_INTERVAL=$TRAINING_STEPS
         EVAL_ITERS=0
         LR_WARMUP_ITERS=10
-        LOGGING_EXTRA=""
+        LOGGING_EXTRA="--log-timers-to-tensorboard"
         WANDB=true
         ;;
     train)
