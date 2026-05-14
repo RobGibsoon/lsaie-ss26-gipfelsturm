@@ -4,3 +4,6 @@ config.sh
 CLAUDE.md
 old_assignments/
 .claude/
+__pycache__
+.DS_Store
+.venv
