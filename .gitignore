@@ -7,3 +7,4 @@ old_assignments/
 __pycache__
 .DS_Store
 .venv
+cluster_wandb/

@@ -16,6 +16,7 @@
 #   FP8_RECIPE=delayed|tensorwise|blockwise
 #                               default: delayed  (ignored unless PRECISION=fp8)
 #   FP8_AMAX_HISTORY_LEN=N      default: 16     (ignored unless PRECISION=fp8)
+#   FP8_AMAX_HISTORY_LEN=N      default: 16     (ignored unless PRECISION=fp8)
 #   FP8_PARAM_GATHER=0|1        default: 0        (only valid with delayed recipe)
 #   TP=N                        override tensor parallel (default per model size)
 #   PP=N                        override pipeline parallel (default per model size)
@@ -121,7 +122,7 @@ case $MODEL_SIZE in
         TP_DEFAULT=1; PP_DEFAULT=1
         ;;
     8b)
-        NUM_LAYERS=32;  HIDDEN=4096;  FFN=14336; HEADS=32; KV_HEADS=8;  MBS=2
+        NUM_LAYERS=32;  HIDDEN=4096;  FFN=14336; HEADS=32; KV_HEADS=8;  MBS=1
         TP_DEFAULT=1; PP_DEFAULT=1
         ;;
     32b)
