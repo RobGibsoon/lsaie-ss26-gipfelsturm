@@ -15,7 +15,7 @@
 #   FP8_FORMAT=hybrid|e4m3      default: hybrid   (ignored unless PRECISION=fp8)
 #   FP8_RECIPE=delayed|tensorwise|blockwise
 #                               default: delayed  (ignored unless PRECISION=fp8)
-#   FP8_AMAX_HISTORY_LEN=N      default: 1024     (ignored unless PRECISION=fp8)
+#   FP8_AMAX_HISTORY_LEN=N      default: 16     (ignored unless PRECISION=fp8)
 #   FP8_PARAM_GATHER=0|1        default: 0        (only valid with delayed recipe)
 #   TP=N                        override tensor parallel (default per model size)
 #   PP=N                        override pipeline parallel (default per model size)
@@ -38,7 +38,7 @@ MODEL_SIZE=${2:?Usage: ./fp8/launch.sh <mode> <model_size> [steps] [nodes]}
 PRECISION=${PRECISION:-bf16}
 FP8_FORMAT=${FP8_FORMAT:-hybrid}
 FP8_RECIPE=${FP8_RECIPE:-delayed}
-FP8_AMAX_HISTORY_LEN=${FP8_AMAX_HISTORY_LEN:-1024}
+FP8_AMAX_HISTORY_LEN=${FP8_AMAX_HISTORY_LEN:-16}
 FP8_PARAM_GATHER=${FP8_PARAM_GATHER:-0}
 
 if [ "$FP8_PARAM_GATHER" = "1" ] && [ "$FP8_RECIPE" != "delayed" ]; then
@@ -125,18 +125,21 @@ case $MODEL_SIZE in
         TP_DEFAULT=1; PP_DEFAULT=1
         ;;
     32b)
-        # Llama-2 34B architecture (~single-node scale, TP=4)
+        # ~32B scale (Llama-2 34B-ish), TP=4
+        # KV_HEADS=4 so HEADS(52) % KV_HEADS(4) == 0 (required by TransformerEngine)
         # Needs >=2 nodes: 1 node (DP=1) OOMs on optimizer states (~136 GB); 2 nodes (DP=2) is tight (~85 GB + activations)
-        NUM_LAYERS=60;  HIDDEN=6656;  FFN=17920; HEADS=52; KV_HEADS=8;  MBS=1
+        NUM_LAYERS=60;  HIDDEN=6656;  FFN=17920; HEADS=52; KV_HEADS=4;  MBS=1
         TP_DEFAULT=4; PP_DEFAULT=1
         NODES=${4:-2}
         ;;
     140b)
-        # GPT-3-style 145B architecture (~multi-node scale, TP=4 PP=4)
-        # Needs 8 nodes: 4 nodes (DP=1) OOMs on optimizer states (~145 GB); 8 nodes (DP=2) is tight (~91 GB + activations)
+        # GPT-3-style ~145B architecture (~multi-node scale, TP=4 PP=4)
+        # Needs 8 nodes + activation recompute: 4 nodes (DP=1) OOMs on optimizer states;
+        # 8 nodes (DP=2) is tight (~91 GB before activations) so we enable selective recompute
         NUM_LAYERS=80;  HIDDEN=12288; FFN=32768; HEADS=96; KV_HEADS=8;  MBS=1
         TP_DEFAULT=4; PP_DEFAULT=4
         NODES=${4:-8}
+        #ACTIVATION_RECOMPUTE="--recompute-granularity selective" perhaps uncomment if still OOMs with 8 nodes
         ;;
     *)
         echo "Unknown model size: $MODEL_SIZE. Choose: 125m, 350m, 760m, 1.5b, 3b, 8b, 32b, 140b"
@@ -146,9 +149,24 @@ esac
 
 TP=${TP:-$TP_DEFAULT}
 PP=${PP:-$PP_DEFAULT}
+ACTIVATION_RECOMPUTE=${ACTIVATION_RECOMPUTE:-}
 
 GBS=256
 SEQ_LEN=4096
+
+# Clamp MBS so that MBS * DP <= GBS (required: GBS divisible by MBS * DP)
+DP_SIZE=$(( NODES * 4 / (TP * PP) ))
+while [ $((MBS * DP_SIZE)) -gt $GBS ]; do
+    MBS=$((MBS / 2))
+    if [ "$MBS" -lt 1 ]; then
+        echo "Error: cannot fit MBS>=1 with DP=$DP_SIZE and GBS=$GBS"
+        exit 1
+    fi
+done
+if [ $((GBS % (MBS * DP_SIZE))) -ne 0 ]; then
+    echo "Error: GBS=$GBS not divisible by MBS=$MBS * DP=$DP_SIZE"
+    exit 1
+fi
 
 # Build a descriptive job name that includes precision
 PREC_TAG="${PRECISION}"
@@ -364,6 +382,7 @@ LOGGING_START
 cat >> "$SCRIPT" << LOGGING_EXTRA
 ${LOGGING_EXTRA}
 $([ -n "$PROFILE_ARGS" ] && echo "    $PROFILE_ARGS")
+$([ -n "$ACTIVATION_RECOMPUTE" ] && echo "    $ACTIVATION_RECOMPUTE")
 )
 LOGGING_EXTRA
 
