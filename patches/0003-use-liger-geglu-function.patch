@@ -1,0 +1,54 @@
+diff --git a/megatron/core/fusions/fused_bias_geglu.py b/megatron/core/fusions/fused_bias_geglu.py
+index 7a7fbe7f9..04ecf3965 100644
+--- a/megatron/core/fusions/fused_bias_geglu.py
++++ b/megatron/core/fusions/fused_bias_geglu.py
+@@ -4,6 +4,9 @@ import torch
+ 
+ from megatron.core.jit import jit_fuser
+ 
++from liger_kernel.ops.geglu import geglu_forward
++from liger_kernel.ops.geglu import geglu_backward
++
+ ###### BIAS GELU FUSION/ NO AUTOGRAD ################
+ # 1/sqrt(2*pi)-> 0.3989423
+ # 1/sqrt(2)   -> 0.70710678
+@@ -122,7 +125,7 @@ class GeGLUFunction(torch.autograd.Function):
+     @staticmethod
+     # bias is an optional argument
+     def forward(ctx, input):
+-        """Forward pass of GEGLU activation.
++        """Forward pass of GEGLU activation. Uses Liger Kernel's fused Triton Implementation.
+ 
+         Args:
+             ctx: Autograd context object for saving tensors for backward pass.
+@@ -132,11 +135,13 @@ class GeGLUFunction(torch.autograd.Function):
+             torch.Tensor: Result of applying GEGLU activation.
+         """
+         ctx.save_for_backward(input)
+-        return geglu(input)
++
++        y_1, y_2 = torch.chunk(input, 2, -1)
++        return geglu_forward(y_1.contiguous(), y_2.contiguous())
+ 
+     @staticmethod
+     def backward(ctx, grad_output):
+-        """Backward pass of GEGLU activation.
++        """Backward pass of GEGLU activation. Uses Liger Kernel's fused Triton implementation.
+ 
+         Args:
+             ctx: Autograd context object containing saved tensors from forward pass.
+@@ -145,9 +150,11 @@ class GeGLUFunction(torch.autograd.Function):
+         Returns:
+             torch.Tensor: Gradient with respect to the input tensor.
+         """
+-        input = ctx.saved_tensors
+-        tmp = geglu_back(grad_output, input[0])
+-        return tmp
++        input = ctx.saved_tensors[0]
++
++        y_1, y_2 = torch.chunk(input, 2, -1)
++        da, db = geglu_backward(y_1.contiguous(), y_2.contiguous(), grad_output.contiguous())
++        return torch.cat([da, db], dim=-1)
+ 
+ 
+ def bias_geglu_impl(input, bias):
