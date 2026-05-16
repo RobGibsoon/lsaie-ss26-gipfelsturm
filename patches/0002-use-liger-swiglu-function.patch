@@ -52,7 +52,7 @@ index 632470876..29e505c02 100644
 -        return swiglu(input)
 +
 +        y_1, y_2 = torch.chunk(input, 2, -1)
-+        return swiglu_forward(y_1.contiguous(), y_2.contiguous())
++        return swiglu_forward(y_1.contiguous(), y_2.contiguous())[2]
  
      @staticmethod
      @nvtx_decorator()

@@ -28,7 +28,7 @@ index 7a7fbe7f9..04ecf3965 100644
 -        return geglu(input)
 +
 +        y_1, y_2 = torch.chunk(input, 2, -1)
-+        return geglu_forward(y_1.contiguous(), y_2.contiguous())
++        return geglu_forward(y_1.contiguous(), y_2.contiguous())[2]
  
      @staticmethod
      def backward(ctx, grad_output):
