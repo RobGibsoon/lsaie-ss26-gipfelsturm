@@ -128,6 +128,7 @@ cat >> "$SCRIPT" << SBATCH_DIRECTIVES
 #SBATCH --cpus-per-task=288
 #SBATCH --mem=460000
 #SBATCH --no-requeue
+#SBATCH --container-writable
 SBATCH_DIRECTIVES
 
 cat >> "$SCRIPT" << 'BODY_HEAD'
@@ -164,6 +165,17 @@ cat >> "$SCRIPT" << 'SETUP'
 #########################################
 
 mkdir -p logs $LOG_DIR $TENSORBOARD_DIR $DATASET_CACHE_DIR
+
+# Install liger-kernel into a persistent venv in shared scratch.
+# Uses --system-site-packages so PyTorch/CUDA from the container remain visible.
+# pip is not on PATH in the NGC container, so we use python -m venv / pip.
+LIGER_VENV=/iopsstor/scratch/cscs/$USER/gipfelsturm/liger-venv
+if [ ! -d "$LIGER_VENV" ]; then
+    python -m venv --system-site-packages $LIGER_VENV
+    $LIGER_VENV/bin/pip install liger-kernel
+fi
+export PATH=$LIGER_VENV/bin:$PATH
+export PYTHONPATH=$LIGER_VENV/lib/python3.12/site-packages:$PYTHONPATH
 
 cd $MEGATRON_LM_DIR
 flock $MEGATRON_LM_DIR/.git-lock bash -c "cd $MEGATRON_LM_DIR && git checkout -- . && git apply $WORKDIR/patches/*.patch"
