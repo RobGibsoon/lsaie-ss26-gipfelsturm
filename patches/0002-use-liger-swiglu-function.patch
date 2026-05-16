@@ -1,10 +1,10 @@
-# Patch: Use _liger_silu_mul_ functions in SwiGLUFunction 
+# Patch: Use liger swiglu functions in SwiGLUFunction 
 #
 # Problem:
 # - No direct problem.
 #
 # What this patch does:
-# - It uses the _liger_silu_mul_fwd and _liger_silu_mul_bwd functions int the SwiGLUFunction to try and improve the
+# - It uses the swiglu_forward and swiglu_backward functions int the SwiGLUFunction to try and improve the
 # throughput.
 diff --git a/megatron/core/fusions/fused_bias_swiglu.py b/megatron/core/fusions/fused_bias_swiglu.py
 index 632470876..29e505c02 100644
@@ -14,8 +14,8 @@ index 632470876..29e505c02 100644
  from megatron.core.jit import jit_fuser
  from megatron.core.utils import nvtx_decorator
  
-+from liger_kernel.ops.swiglu import swiglu_forward as _liger_silu_mul_fwd
-+from liger_kernel.ops.swiglu import swiglu_backward as _liger_silu_mul_bwd
++from liger_kernel.ops.swiglu import swiglu_forward
++from liger_kernel.ops.swiglu import swiglu_backward
 +
  ###### BIAS SWIGLU FUSION/ NO AUTOGRAD ################
  
@@ -52,7 +52,7 @@ index 632470876..29e505c02 100644
 -        return swiglu(input)
 +
 +        y_1, y_2 = torch.chunk(input, 2, -1)
-+        return _liger_silu_mul_fwd(y_1.contiguous(), y_2.contiguous())
++        return swiglu_forward(y_1.contiguous(), y_2.contiguous())
  
      @staticmethod
      @nvtx_decorator()
@@ -74,7 +74,7 @@ index 632470876..29e505c02 100644
 -        return tmp, None, None
 +
 +        y_1, y_2 = torch.chunk(input, 2, -1)
-+        da, db = _liger_silu_mul_bwd(y_1.contiguous(), y_2.contiguous(), grad_output.contiguous())
++        da, db = swiglu_backward(y_1.contiguous(), y_2.contiguous(), grad_output.contiguous())
 +        return torch.cat([da, db], dim=-1), None, None
  
  
