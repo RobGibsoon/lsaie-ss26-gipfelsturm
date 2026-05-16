@@ -169,12 +169,20 @@ mkdir -p logs $LOG_DIR $TENSORBOARD_DIR $DATASET_CACHE_DIR
 # Install liger-kernel into a persistent venv using uv (available in the NGC container).
 # --system-site-packages: inherit PyTorch/CUDA from the container.
 # --relocatable --link-mode=copy: safe on shared LUSTRE scratch across nodes.
+uenv start --view=default prgenv-gnu/25.6:v2
+unset PYTHONPATH
+export PYTHONUSERBASE="$(dirname "$(dirname "$(which python)")")"
 LIGER_VENV=/iopsstor/scratch/cscs/$USER/gipfelsturm/liger-venv
-if [ ! -d "$LIGER_VENV" ]; then
-    uv venv --python $(which python) --system-site-packages --seed --relocatable --link-mode=copy $LIGER_VENV
-    uv pip install --python $LIGER_VENV/bin/python liger-kernel
-fi
+
+python -m venv --system-site-packages $LIGER_VENV
 source $LIGER_VENV/bin/activate
+
+python -m pip list -v
+pip install liger-kernel
+#if [ ! -d "$LIGER_VENV" ]; then
+#    uv venv --python $(which python) --system-site-packages --seed --relocatable --link-mode=copy $LIGER_VENV
+#    uv pip install --python $LIGER_VENV/bin/python liger-kernel
+#fi
 export PYTHONPATH=$LIGER_VENV/lib/python3.12/site-packages:$PYTHONPATH
 
 cd $MEGATRON_LM_DIR
