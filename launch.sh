@@ -168,7 +168,7 @@ mkdir -p logs $LOG_DIR $TENSORBOARD_DIR $DATASET_CACHE_DIR
 
 # Add liger kernels to PYTHONPATH if they exist
 SITE_PACKAGES=/iopsstor/scratch/cscs/$USER/gipfelsturm/site-packages
-if [ -d "$SITE_PACKAGES/liger-kernel" ]; then
+if [ -d "$SITE_PACKAGES/liger_kernel" ]; then
     export PYTHONPATH=$SITE_PACKAGES:$PYTHONPATH
 fi
 
