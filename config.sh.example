@@ -8,3 +8,6 @@ export WORKDIR="/iopsstor/scratch/cscs/your_cscs_account/gipfelsturm"
 export SBATCH_ACCOUNT="lsaie-ss26"
 
 export WANDB_API_KEY=""
+
+# Optionally override the time limit for the job
+# export SBATCH_TIME="00:10:00"
