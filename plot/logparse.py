@@ -13,7 +13,7 @@ ITER_RE = re.compile(
     r"iteration\s+(?P<iteration>\d+)/\s*(?P<total_iterations>\d+)\s*\|\s*"
     r"consumed samples:\s*(?P<consumed_samples>\d+)\s*\|\s*"
     r"elapsed time per iteration \(ms\):\s*(?P<elapsed_time_ms>[\d.]+)\s*\|\s*"
-    r"throughput per GPU \(TFLOP/s/GPU\):\s*(?P<throughput_tflops_per_gpu>[\d.]+)\s*\|\s*"
+    r"throughput per GPU \(TFLOP/s/GPU\):\s*(?P<throughput>[\d.]+)\s*\|\s*"
     r"tokens/sec/GPU:\s*(?P<tokens_per_sec_per_gpu>\d+)\s*\|\s*"
     r"learning rate:\s*(?P<learning_rate>[\d.E+\-]+)\s*\|\s*"
     r"global batch size:\s*(?P<global_batch_size>\d+)\s*\|\s*"
@@ -35,7 +35,7 @@ INT_FIELDS = {
 }
 FLOAT_FIELDS = {
     "elapsed_time_ms",
-    "throughput_tflops_per_gpu",
+    "throughput",
     "learning_rate",
     "lm_loss",
     "loss_scale",

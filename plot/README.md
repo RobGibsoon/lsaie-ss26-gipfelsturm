@@ -2,7 +2,9 @@
 
 ## Create JSON run files
 
-Parse the log file into a JSON that can be used to create a plot. Use `logparse.py` and provide the input log file, a descriptive name for the run (e.g. *8B BF16*, this will be displayed in the plot legend), and the output JSON file name.
+Normally, a json log file should be created automatically after running `lauch.sh` (see the patch `patches/0002-log-metrics-to-json.patch`).
+
+Otherwise, if you do not have the `.json` log file, use `logparse.py` and provide the input stdout log, a descriptive name for the run (e.g. *8B BF16*, this will be displayed in the plot legend), and the output JSON file name.
 
 ```bash
 python logparse.py \

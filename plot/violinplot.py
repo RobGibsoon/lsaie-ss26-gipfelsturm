@@ -17,7 +17,7 @@ COLUMN_WIDTH = 8
 WARMUP_ITERS = 5  # skip first iters (compile/warmup spikes)
 
 METRICS = [
-    ("throughput_tflops_per_gpu", "Throughput (TFLOP/s/GPU)"),
+    ("throughput", "Throughput (TFLOP/s/GPU)"),
     ("tokens_per_sec_per_gpu", "Tokens per second per GPU"),
 ]
 
@@ -101,15 +101,22 @@ def custom_violinplot(ax, data, pos, color):
     ci_min, ci_max = median_ci(arr)
     ax.hlines(pos, ci_min, ci_max, linestyle="-", lw=3, color=color)
 
+def get_name(run: dict, path: Path) -> str:
+    if "name" in run:
+        return run["name"]
+    if "model_size" in run:
+        return run["model_size"]
+    return path.stem
+
 
 def compare_runs(run_paths: list[Path], title: str, output_file: Path):
     runs = [load_run(p) for p in run_paths]
-    names = [r.get("name", p.stem) for r, p in zip(runs, run_paths)]
+    names = [get_name(r, p) for r, p in zip(runs, run_paths)]
     colors = get_color_cycle()
 
     n_metrics = len(METRICS)
     fig, axes = plt.subplots(
-        n_metrics, 1, figsize=(COLUMN_WIDTH, max(2.2, len(runs)) * n_metrics)
+        n_metrics, 1, figsize=(COLUMN_WIDTH, n_metrics * len(runs))
     )
     if n_metrics == 1:
         axes = [axes]
@@ -132,12 +139,9 @@ def compare_runs(run_paths: list[Path], title: str, output_file: Path):
         ax.set_title(label, fontsize=TITLE_FONT_SIZE, fontweight="bold", loc="left")
 
     if title:
-        suptitle(fig, "-\n-")
-        fig.tight_layout()
         suptitle(fig, title)
-    else:
-        fig.tight_layout()
-
+    
+    fig.tight_layout()
     output_file.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(output_file, dpi=300, bbox_inches="tight")
     print(f"saved {output_file}")
