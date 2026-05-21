@@ -87,6 +87,7 @@ esac
 
 GBS=256
 SEQ_LEN=4096
+TOTAL_ITERS=$((TRAINING_STEPS + LR_WARMUP_ITERS))
 JOB_NAME="gipfel-${MODE}-${MODEL_SIZE}-${TRAINING_STEPS}s-${NODES}n"
 
 ################ W&B block ################
@@ -151,6 +152,7 @@ MBS=${MBS}
 GBS=${GBS}
 SEQ_LEN=${SEQ_LEN}
 TRAINING_STEPS=${TRAINING_STEPS}
+TOTAL_ITERS=${TOTAL_ITERS}
 MODEL_SIZE=${MODEL_SIZE}
 MODE=${MODE}
 
@@ -214,7 +216,7 @@ cat >> "$SCRIPT" << TRAINING
 TRAINING_ARGS=(
     --micro-batch-size \$MBS
     --global-batch-size \$GBS
-    --train-iters \$TRAINING_STEPS
+    --train-iters \$TOTAL_ITERS
     --log-interval 1
     --eval-interval ${EVAL_INTERVAL}
     --eval-iters ${EVAL_ITERS}
