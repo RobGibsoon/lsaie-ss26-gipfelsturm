@@ -1,0 +1,65 @@
+# Patch: Per-run JSON metrics log
+#
+# Problem:
+#   W&B/TensorBoard logs are convenient for live monitoring but awkward for
+#   post-hoc plotting and joining with the SLURM stdout log. We want a
+#   self-contained JSON file per run, co-located with logs/<job>-<id>.log.
+#
+# What this patch does:
+#   In megatron/training/training.py, function training_log(), inside the
+#   `if args.log_throughput:` block, on rank 0, atomically writes/updates a
+#   JSON file at $GIPFEL_JSON_LOG_DIR/$GIPFEL_RUN_NAME.json each log step.
+#   Contains: run_name, static config (world_size, global_batch_size,
+#   micro_batch_size, seq_length, plus optional model_size/mode/nodes from
+#   env), and parallel arrays iterations, tokens_per_sec_per_gpu, throughput.
+#
+# Dependencies:
+#   Requires patch 0001 (defines `tokens_per_sec_per_gpu`). Patches apply in
+#   sorted order via `git apply patches/*.patch`.
+#
+# How to find the right location in a future version:
+#   Search for `tokens_per_sec_per_gpu` (added by 0001). Insert the JSON
+#   write block immediately after the `wandb_writer.log` call for that
+#   metric, still inside the `if args.log_throughput:` block.
+#
+# Applied to: Megatron-LM core_v0.16.1
+#
+--- a/megatron/training/training.py
++++ b/megatron/training/training.py
+@@ -2053,6 +2053,36 @@
+                 if wandb_writer:
+                     wandb_writer.log({'throughput': throughput}, iteration)
+                     wandb_writer.log({'tokens-per-sec-per-gpu': tokens_per_sec_per_gpu}, iteration)
++            _gipfel_json_dir = os.environ.get('GIPFEL_JSON_LOG_DIR')
++            _gipfel_run_name = os.environ.get('GIPFEL_RUN_NAME')
++            if _gipfel_json_dir and _gipfel_run_name and torch.distributed.get_rank() == 0:
++                import json
++                if not hasattr(training_log, '_gipfel_json'):
++                    training_log._gipfel_json = {
++                        'run_name': _gipfel_run_name,
++                        'world_size': args.world_size,
++                        'global_batch_size': args.global_batch_size,
++                        'micro_batch_size': args.micro_batch_size,
++                        'seq_length': args.seq_length,
++                        'iterations': [],
++                        'tokens_per_sec_per_gpu': [],
++                        'throughput': [],
++                    }
++                    for _gipfel_k in ('model_size', 'mode', 'nodes'):
++                        _gipfel_v = os.environ.get(f'GIPFEL_{_gipfel_k.upper()}')
++                        if _gipfel_v is not None:
++                            training_log._gipfel_json[_gipfel_k] = (
++                                int(_gipfel_v) if _gipfel_k == 'nodes' else _gipfel_v
++                            )
++                _gipfel_d = training_log._gipfel_json
++                _gipfel_d['iterations'].append(int(iteration))
++                _gipfel_d['tokens_per_sec_per_gpu'].append(float(tokens_per_sec_per_gpu))
++                _gipfel_d['throughput'].append(float(throughput))
++                _gipfel_path = os.path.join(_gipfel_json_dir, f'{_gipfel_run_name}.json')
++                _gipfel_tmp = _gipfel_path + '.tmp'
++                with open(_gipfel_tmp, 'w') as _gipfel_f:
++                    json.dump(_gipfel_d, _gipfel_f)
++                os.replace(_gipfel_tmp, _gipfel_path)
+         if args.log_energy:
+             energy = (energy_monitor.lap() / total_iterations) / args.world_size
+             power = energy / elapsed_time_per_iteration

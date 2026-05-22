@@ -234,6 +234,7 @@ As we upgrade Megatron-LM to a new release version, we will attempt to apply all
 | Patch | Description |
 |-------|-------------|
 | `0001-log-tokens-per-sec-to-wandb.patch` | Logs tokens/sec/GPU to stdout, TensorBoard, and W&B |
+| `0002-log-metrics-to-json.patch` | Writes per-run JSON (`tokens_per_sec_per_gpu`, `throughput`, iterations, config) to `logs/<run>.json` |
 
 ## References
 

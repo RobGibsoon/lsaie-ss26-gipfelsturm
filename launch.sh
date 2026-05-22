@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Usage: ./launch.sh <mode> <model_size> [steps] [nodes]
+# Usage: ./launch.sh <mode> <model_size> [steps] [nodes] [time]
 #
 # Modes:     throughput  (50 steps, with W&B)
 #            train       (N steps, with W&B and Tensorboard)
@@ -9,25 +9,27 @@
 #
 # Steps:     required for train mode (e.g., 1000, 5000, 15000)
 # Nodes:     optional, default 4 (max 8)
+# Time:      optional SBATCH --time (HH:MM:SS), defaults per mode
 #
 # Examples:  ./launch.sh throughput 760m
 #            ./launch.sh throughput 8b 50 1
 #            ./launch.sh train 760m 5000
 #            ./launch.sh train 1.5b 3000 8
+#            ./launch.sh train 1.5b 3000 8 04:00:00
 
 set -euo pipefail
 
 source "$(dirname "$0")/config.sh"
 
-MODE=${1:?Usage: ./launch.sh <mode> <model_size> [steps] [nodes]}
-MODEL_SIZE=${2:?Usage: ./launch.sh <mode> <model_size> [steps] [nodes]}
+MODE=${1:?Usage: ./launch.sh <mode> <model_size> [steps] [nodes] [time]}
+MODEL_SIZE=${2:?Usage: ./launch.sh <mode> <model_size> [steps] [nodes] [time]}
 
 ################ Mode config ################
 case $MODE in
     throughput)
         TRAINING_STEPS=${3:-50}
         NODES=${4:-4}
-        TIME=00:30:00
+        TIME=${5:-00:30:00}
         EVAL_INTERVAL=$TRAINING_STEPS
         EVAL_ITERS=0
         LR_WARMUP_ITERS=10
@@ -35,9 +37,9 @@ case $MODE in
         WANDB=true
         ;;
     train)
-        TRAINING_STEPS=${3:?Usage: ./launch.sh train <model_size> <steps> [nodes]}
+        TRAINING_STEPS=${3:?Usage: ./launch.sh train <model_size> <steps> [nodes] [time]}
         NODES=${4:-4}
-        TIME=02:30:00
+        TIME=${5:-02:30:00}
         EVAL_INTERVAL=1000
         EVAL_ITERS=10
         LR_WARMUP_ITERS=200
@@ -87,6 +89,7 @@ esac
 
 GBS=256
 SEQ_LEN=4096
+TOTAL_ITERS=$((TRAINING_STEPS + LR_WARMUP_ITERS))
 JOB_NAME="gipfel-${MODE}-${MODEL_SIZE}-${TRAINING_STEPS}s-${NODES}n"
 
 ################ W&B block ################
@@ -151,6 +154,9 @@ MBS=${MBS}
 GBS=${GBS}
 SEQ_LEN=${SEQ_LEN}
 TRAINING_STEPS=${TRAINING_STEPS}
+TOTAL_ITERS=${TOTAL_ITERS}
+MODEL_SIZE=${MODEL_SIZE}
+MODE=${MODE}
 
 # Logging
 PROJECT_NAME=gipfelsturm
@@ -173,6 +179,11 @@ export TORCH_NCCL_AVOID_RECORD_STREAMS=1
 export TORCH_NCCL_ASYNC_ERROR_HANDLING=1
 export TRITON_CACHE_DIR=/iopsstor/scratch/cscs/$USER/gipfelsturm/.triton_cache
 export TORCHINDUCTOR_CACHE_DIR=/iopsstor/scratch/cscs/$USER/gipfelsturm/.inductor_cache
+export GIPFEL_JSON_LOG_DIR=$SLURM_SUBMIT_DIR/logs
+export GIPFEL_RUN_NAME=$SLURM_JOB_NAME-$SLURM_JOB_ID
+export GIPFEL_MODEL_SIZE=$MODEL_SIZE
+export GIPFEL_MODE=$MODE
+export GIPFEL_NODES=$SLURM_NNODES
 export OMP_NUM_THREADS=$((SLURM_CPUS_PER_TASK/SLURM_GPUS_PER_NODE))
 MASTER_ADDR=$(hostname)
 MASTER_PORT=25678
@@ -207,7 +218,7 @@ cat >> "$SCRIPT" << TRAINING
 TRAINING_ARGS=(
     --micro-batch-size \$MBS
     --global-batch-size \$GBS
-    --train-iters \$TRAINING_STEPS
+    --train-iters \$TOTAL_ITERS
     --log-interval 1
     --eval-interval ${EVAL_INTERVAL}
     --eval-iters ${EVAL_ITERS}
