@@ -102,8 +102,8 @@ def custom_violinplot(ax, data, pos, color):
     ax.hlines(pos, ci_min, ci_max, linestyle="-", lw=3, color=color)
 
 def get_name(run: dict, path: Path) -> str:
-    if "name" in run:
-        return run["name"]
+    if "run_name" in run:
+        return run["run_name"]
     if "model_size" in run:
         return run["model_size"]
     return path.stem
