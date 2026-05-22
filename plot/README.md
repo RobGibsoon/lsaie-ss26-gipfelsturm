@@ -26,3 +26,11 @@ You can also provide a directory to compare all json files in it:
 ```bash
 python violinplot.py -f runs/
 ```
+
+# Create a scalability plot
+
+To create a scalability plot, first make sure that different JSON files with the same model settings have the same name (e.g., 'fp8' or 'baseline'). Then, use `scalabilityplot.py` to create a scatter plot of throughput vs model size, grouped by model name. For example:
+
+```bash
+python scalabilityplot.py -f runs
+```
