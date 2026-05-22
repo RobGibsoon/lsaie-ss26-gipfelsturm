@@ -101,6 +101,7 @@ def custom_violinplot(ax, data, pos, color):
     ci_min, ci_max = median_ci(arr)
     ax.hlines(pos, ci_min, ci_max, linestyle="-", lw=3, color=color)
 
+
 def get_name(run: dict, path: Path) -> str:
     if "run_name" in run:
         return run["run_name"]
@@ -140,7 +141,7 @@ def compare_runs(run_paths: list[Path], title: str, output_file: Path):
 
     if title:
         suptitle(fig, title)
-    
+
     fig.tight_layout()
     output_file.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(output_file, dpi=300, bbox_inches="tight")
