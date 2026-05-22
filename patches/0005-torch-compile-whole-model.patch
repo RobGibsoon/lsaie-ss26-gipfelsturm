@@ -55,13 +55,12 @@ diff --git a/megatron/training/training.py b/megatron/training/training.py
 index d61b9357a..3e4b4568d 100644
 --- a/megatron/training/training.py
 +++ b/megatron/training/training.py
-@@ -1273,6 +1273,20 @@ def get_model(model_provider_func, model_type=ModelType.encoder_or_decoder, wrap
+@@ -1273,6 +1273,19 @@ def get_model(model_provider_func, model_type=ModelType.encoder_or_decoder, wrap
      # After TE2.x: Below function is an empty function and does nothing.
      correct_amax_history_if_needed(model)
 
 +    # Whole-model torch.compile: compile each PP-stage chunk separately so that
 +    # distributed communication calls between stages are not captured in the graph.
-+    # dynamic=True handles variable sequence lengths without recompilation.
 +    # Per-function @jit_fuser compilations are inlined by Dynamo into the larger
 +    # graph, enabling cross-boundary fusion that individual decorators cannot reach.
 +    if getattr(args, 'torch_compile', False):
@@ -69,7 +68,7 @@ index d61b9357a..3e4b4568d 100644
 +        disable_jit_fuser()
 +        compile_mode = getattr(args, 'torch_compile_mode', 'default')
 +        model = [
-+            torch.compile(m, mode=compile_mode, dynamic=True)
++            torch.compile(m, mode=compile_mode, dynamic=False)
 +            for m in model
 +        ]
 +
