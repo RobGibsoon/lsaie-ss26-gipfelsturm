@@ -1,0 +1,42 @@
+# Patch: Call torch.compiler.cudagraph_mark_step_begin() before each model invocation
+#
+# Problem:
+# - --torch-compile-mode reduce-overhead uses CUDA graph capture internally.
+#   TransformerEngine's fused attention (_get_cu_seqlens) creates a cu_seqlens_q
+#   tensor via torch.arange() inside the graph. On the second and subsequent
+#   iterations this tensor is overwritten by the new run while the previous run
+#   still holds a reference, causing a RuntimeError:
+#
+#     RuntimeError: Error: accessing tensor output of CUDAGraphs that has been
+#     overwritten by a subsequent run. [...] call
+#     torch.compiler.cudagraph_mark_step_begin() before each model invocation.
+#
+# What this patch does:
+# - In forward_step() in schedules.py, immediately before the call to
+#   forward_step_func (which invokes the compiled model), calls
+#   torch.compiler.cudagraph_mark_step_begin().
+# - The call is guarded by hasattr so it is safe on older PyTorch versions that
+#   do not have the function.
+# - When CUDA graphs are not active (e.g. --torch-compile-mode default) the
+#   call is a no-op, so there is no overhead or correctness risk for other modes.
+#
+# Usage:
+#   Apply this patch together with 0005-torch-compile-whole-model.patch and use
+#     --torch-compile --torch-compile-mode reduce-overhead
+#
+diff --git a/megatron/core/pipeline_parallel/schedules.py b/megatron/core/pipeline_parallel/schedules.py
+index edca62be3..c69bf9580 100644
+--- a/megatron/core/pipeline_parallel/schedules.py
++++ b/megatron/core/pipeline_parallel/schedules.py
+@@ -418,6 +418,11 @@ def forward_step(
+         context_manager = torch.autocast("cuda", dtype=config.autocast_dtype)
+     else:
+         context_manager = contextlib.nullcontext()
++    # Inform the CUDA-graph runtime that a new step is starting so it does not
++    # treat tensors captured in a previous run as still live.  This is a no-op
++    # when reduce-overhead / CUDA graphs are not in use.
++    if hasattr(torch.compiler, 'cudagraph_mark_step_begin'):
++        torch.compiler.cudagraph_mark_step_begin()
+     with context_manager:
+         if checkpoint_activations_microbatch is None:
+             output_tensor, loss_func = forward_step_func(data_iterator, model)
