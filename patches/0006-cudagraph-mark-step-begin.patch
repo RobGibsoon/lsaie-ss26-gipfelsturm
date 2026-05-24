@@ -17,8 +17,16 @@
 #   torch.compiler.cudagraph_mark_step_begin().
 # - The call is guarded by hasattr so it is safe on older PyTorch versions that
 #   do not have the function.
-# - When CUDA graphs are not active (e.g. --torch-compile-mode default) the
-#   call is a no-op, so there is no overhead or correctness risk for other modes.
+# - When CUDA graphs are not active (e.g. --torch-compile-mode default or
+#   max-autotune-no-cudagraphs) the call is a no-op, so there is no overhead or
+#   correctness risk for other modes.
+#
+# Scope:
+#   Only needed with --torch-compile-mode reduce-overhead.
+#   Do NOT use with max-autotune: that mode performs multiple internal CUDA graph  
+#   replays during kernel autotuning within a single outer Python step, so a single
+#   mark_step_begin() call before the outer forward pass is insufficient to prevent
+#   overwrites. Use max-autotune-no-cudagraphs instead.
 #
 # Usage:
 #   Apply this patch together with 0005-torch-compile-whole-model.patch and use
