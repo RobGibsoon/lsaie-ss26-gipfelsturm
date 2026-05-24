@@ -8,6 +8,11 @@
 #
 # What this patch does:
 # - Adds --torch-compile and --torch-compile-mode CLI flags.
+#   Supported modes: default, reduce-overhead, max-autotune-no-cudagraphs.
+#   (max-autotune is intentionally excluded: it performs multiple internal CUDA graph
+#   replays during kernel autotuning that conflict with TransformerEngine's fused
+#   attention, and cudagraph_mark_step_begin() is insufficient to fix it. Use
+#   max-autotune-no-cudagraphs to get autotuning benefits without the graph issues.)
 # - In get_model(), after Float16Module wrapping and before DDP wrapping, wraps each
 #   model chunk with torch.compile(dynamic=True). Each pipeline stage chunk is compiled
 #   separately so distributed communication calls between stages are not captured in the
@@ -20,16 +25,17 @@
 # Usage:
 #   Add to your training script:
 #     --torch-compile
-#     --torch-compile-mode default        # or reduce-overhead / max-autotune
+#     --torch-compile-mode default                     # safe baseline
+#     --torch-compile-mode reduce-overhead             # CUDA graphs, lower kernel-launch overhead
+#                                                      # (also apply 0006-cudagraph-mark-step-begin.patch)
+#     --torch-compile-mode max-autotune-no-cudagraphs  # autotuning without CUDA graphs
 #
 # Notes:
 # - The first training step will be slow due to compilation/autotuning.
 # - dynamic=True avoids recompilation for variable sequence lengths but may reduce
 #   some static-shape optimisations. Remove it if sequence length is fixed.
-# - reduce-overhead uses CUDA graphs; verify it is compatible with your PP/TP setup
-#   before using in production.
 diff --git a/megatron/training/arguments.py b/megatron/training/arguments.py
-index 46f3c28b1..0a9cc7ac1 100644
+index 46f3c28b1..25c9860a0 100644
 --- a/megatron/training/arguments.py
 +++ b/megatron/training/arguments.py
 @@ -2053,6 +2053,18 @@ def _add_training_args(parser):
@@ -43,11 +49,11 @@ index 46f3c28b1..0a9cc7ac1 100644
 +                       'Each pipeline stage is compiled separately so communication '
 +                       'calls between stages are not affected.')
 +    group.add_argument('--torch-compile-mode', type=str, default='default',
-+                       choices=['default', 'reduce-overhead', 'max-autotune'],
++                       choices=['default', 'reduce-overhead', 'max-autotune-no-cudagraphs'],
 +                       help='torch.compile mode used when --torch-compile is set. '
 +                       '"default": safe baseline with good fusion. '
 +                       '"reduce-overhead": uses CUDA graphs to reduce Python/kernel-launch overhead. '
-+                       '"max-autotune": runs autotuning to select the best kernels (slow first step).')
++                       '"max-autotune-no-cudagraphs": autotuning without CUDA graphs, avoids graph tensor lifetime issues.')
      group.add_argument('--optimizer', type=str, default='adam',
                         choices=['adam', 'sgd', 'muon', 'dist_muon'],
                         help='Optimizer function')
@@ -55,12 +61,13 @@ diff --git a/megatron/training/training.py b/megatron/training/training.py
 index d61b9357a..3e4b4568d 100644
 --- a/megatron/training/training.py
 +++ b/megatron/training/training.py
-@@ -1273,6 +1273,19 @@ def get_model(model_provider_func, model_type=ModelType.encoder_or_decoder, wrap
+@@ -1273,6 +1273,20 @@ def get_model(model_provider_func, model_type=ModelType.encoder_or_decoder, wrap
      # After TE2.x: Below function is an empty function and does nothing.
      correct_amax_history_if_needed(model)
 
 +    # Whole-model torch.compile: compile each PP-stage chunk separately so that
 +    # distributed communication calls between stages are not captured in the graph.
++    # dynamic=True handles variable sequence lengths without recompilation.
 +    # Per-function @jit_fuser compilations are inlined by Dynamo into the larger
 +    # graph, enabling cross-boundary fusion that individual decorators cannot reach.
 +    if getattr(args, 'torch_compile', False):
