@@ -1,20 +1,31 @@
-# Patch: Call torch.compiler.cudagraph_mark_step_begin() before each model invocation
+# Patch: Call torch.compiler.cudagraph_mark_step_begin() before each fused-attention invocation
 #
 # Problem:
 # - --torch-compile-mode reduce-overhead uses CUDA graph capture internally.
-#   TransformerEngine's fused attention (_get_cu_seqlens) creates a cu_seqlens_q
-#   tensor via torch.arange() inside the graph. On the second and subsequent
-#   iterations this tensor is overwritten by the new run while the previous run
-#   still holds a reference, causing a RuntimeError:
+#   TransformerEngine's fused_attention module has its own separate torch.compile
+#   CUDA graph (visible in tracebacks as eval_frame.py _fn calling into
+#   backends.py). This graph is replayed once per transformer layer — 24 times
+#   in a single forward pass for a 24-layer model. Each replay overwrites the
+#   same static buffer that backs cu_seqlens_q (created via torch.arange() in
+#   _get_cu_seqlens). After the second layer's replay, PyTorch marks the buffer
+#   as "overwritten by a subsequent run" and raises:
 #
 #     RuntimeError: Error: accessing tensor output of CUDAGraphs that has been
 #     overwritten by a subsequent run. [...] call
 #     torch.compiler.cudagraph_mark_step_begin() before each model invocation.
 #
+# Why the previous schedules.py fix was insufficient:
+# - Calling mark_step_begin() once per microbatch (before forward_step_func)
+#   only clears the "overwritten" flag before the first layer. The second
+#   layer's fused_attention replay sets the flag again, and the second layer's
+#   own access to cu_seqlens_q immediately raises the error — all within the
+#   same microbatch's forward pass.
+#
 # What this patch does:
-# - In forward_step() in schedules.py, immediately before the call to
-#   forward_step_func (which invokes the compiled model), calls
-#   torch.compiler.cudagraph_mark_step_begin().
+# - In TEDotProductAttention.forward() in transformer_engine.py, immediately
+#   before the super().forward() call (which dispatches into fused_attention),
+#   calls torch.compiler.cudagraph_mark_step_begin(). A single insertion covers
+#   both branches of the if/else (te_forward_mask_type vs. plain).
 # - The call is guarded by hasattr so it is safe on older PyTorch versions that
 #   do not have the function.
 # - When CUDA graphs are not active (e.g. --torch-compile-mode default or
@@ -23,28 +34,29 @@
 #
 # Scope:
 #   Only needed with --torch-compile-mode reduce-overhead.
-#   Do NOT use with max-autotune: that mode performs multiple internal CUDA graph  
-#   replays during kernel autotuning within a single outer Python step, so a single
-#   mark_step_begin() call before the outer forward pass is insufficient to prevent
-#   overwrites. Use max-autotune-no-cudagraphs instead.
+#   Do NOT use with max-autotune: that mode performs multiple internal CUDA graph
+#   replays during kernel autotuning within a single outer Python step, so
+#   mark_step_begin() calls are still insufficient to prevent overwrites.
+#   Use max-autotune-no-cudagraphs instead.
 #
 # Usage:
 #   Apply this patch together with 0005-torch-compile-whole-model.patch and use
 #     --torch-compile --torch-compile-mode reduce-overhead
 #
-diff --git a/megatron/core/pipeline_parallel/schedules.py b/megatron/core/pipeline_parallel/schedules.py
-index edca62be3..c69bf9580 100644
---- a/megatron/core/pipeline_parallel/schedules.py
-+++ b/megatron/core/pipeline_parallel/schedules.py
-@@ -418,6 +418,11 @@ def forward_step(
-         context_manager = torch.autocast("cuda", dtype=config.autocast_dtype)
-     else:
-         context_manager = contextlib.nullcontext()
-+    # Inform the CUDA-graph runtime that a new step is starting so it does not
-+    # treat tensors captured in a previous run as still live.  This is a no-op
-+    # when reduce-overhead / CUDA graphs are not in use.
-+    if hasattr(torch.compiler, 'cudagraph_mark_step_begin'):
-+        torch.compiler.cudagraph_mark_step_begin()
-     with context_manager:
-         if checkpoint_activations_microbatch is None:
-             output_tensor, loss_func = forward_step_func(data_iterator, model)
+diff --git a/megatron/core/extensions/transformer_engine.py b/megatron/core/extensions/transformer_engine.py
+index ef8527e9e..c15991e60 100644
+--- a/megatron/core/extensions/transformer_engine.py
++++ b/megatron/core/extensions/transformer_engine.py
+@@ -1393,6 +1393,12 @@ class TEDotProductAttention(te.pytorch.DotProductAttention):
+             ):
+                 #  need to change mask type for SWA inference decode stage.
+                 attn_mask_type = AttnMaskType.causal_bottom_right
++        # fused_attention has its own torch.compile CUDA graph that is replayed
++        # once per transformer layer. Without this call each successive layer's
++        # replay marks the previous layer's static cu_seqlens_q buffer as
++        # overwritten, causing a RuntimeError on the very next access.
++        if hasattr(torch.compiler, 'cudagraph_mark_step_begin'):
++            torch.compiler.cudagraph_mark_step_begin()
+         if self.te_forward_mask_type:
+             if qkv_format == "thd" and is_te_min_version("1.7.0"):
+                 # thd format uses flash attention with cuDNN kernel which requires is_padding=True,
