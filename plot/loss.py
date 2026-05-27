@@ -95,7 +95,7 @@ def plot_comparison(files: list[Path], title: str, output_file: Path):
     bars = ax_bar.barh(y_pos, max_iters, color=run_colors, alpha=0.8)
     ax_bar.set_yticks(y_pos)
     ax_bar.set_yticklabels(run_names, fontweight="bold")
-    ax_bar.set_title("Total Iterations (in 2h)", fontweight="bold", fontsize=TITLE_FONT_SIZE)
+    ax_bar.set_title("Total Iterations (in 2.5h)", fontweight="bold", fontsize=TITLE_FONT_SIZE)
     ax_bar.set_xlabel("Iterations", fontsize=LABEL_FONT_SIZE)
     
     for bar in bars:
