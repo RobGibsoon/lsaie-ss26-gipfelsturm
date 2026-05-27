@@ -93,3 +93,8 @@ python3 plot/scatter_plot.py --mode size-sweep \
   -t "FP8 vs BF16 throughput across model sizes (1 node, TP=1)" \
   -o plots/fp8-vs-bf16-size-sweep.png
 
+## fp8-vs-bf16-val-loss
+
+Shows train performance of fp8 vs bf16 on 8b model.
+
+python3 plot/loss.py fp8-vs-bf16-val-loss/ -t "Progression of validation loss (8b parameters)" -o plots/fp8-vs-bf16-val-loss.png
