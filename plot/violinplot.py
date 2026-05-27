@@ -109,23 +109,25 @@ def get_name(run: dict, path: Path) -> str:
     return path.stem
 
 
-def compare_runs(run_paths: list[Path], title: str, output_file: Path):
+def compare_runs(run_paths: list[Path], title: str, output_file: Path, metrics: list[tuple[str, str]] = METRICS):
     runs = [load_run(p) for p in run_paths]
     names = [get_name(r, p) for r, p in zip(runs, run_paths)]
     colors = get_color_cycle()
 
-    n_metrics = len(METRICS)
+    n_metrics = len(metrics)
     fig, axes = plt.subplots(
         n_metrics, 1, figsize=(COLUMN_WIDTH, n_metrics * len(runs))
     )
     if n_metrics == 1:
         axes = [axes]
 
-    for ax, (key, label) in zip(axes, METRICS):
+    for ax, (key, label) in zip(axes, metrics):
+        oom_positions = []
         for i, run in enumerate(runs):
             values = run.get(key, [])
             values = values[WARMUP_ITERS:] if len(values) > WARMUP_ITERS else values
             if not values:
+                oom_positions.append(i + 1)
                 continue
             pos = [i + 1]
             color = colors[i % len(colors)]
@@ -134,6 +136,11 @@ def compare_runs(run_paths: list[Path], title: str, output_file: Path):
         ax.set_yticks(
             [i + 1 for i in range(len(runs))], names, fontsize=LABEL_FONT_SIZE
         )
+        for ypos in oom_positions:
+            xlim = ax.get_xlim()
+            x = xlim[0] + (xlim[1] - xlim[0]) * 0.02
+            ax.text(x, ypos, "OOM", va="center", ha="left",
+                    fontsize=LABEL_FONT_SIZE, color="crimson", fontweight="bold")
         ax.xaxis.grid(True)
         ax.yaxis.grid(False)
         ax.set_title(label, fontsize=TITLE_FONT_SIZE, fontweight="bold", loc="left")
@@ -165,6 +172,14 @@ def main() -> int:
         default=Path("plot.png"),
         help="File to save plot",
     )
+    ap.add_argument(
+        "--metrics",
+        nargs="+",
+        choices=[k for k, _ in METRICS],
+        default=[k for k, _ in METRICS],
+        help="Which metric panels to include (default: all). "
+             f"Choices: {[k for k, _ in METRICS]}",
+    )
     args = ap.parse_args()
 
     files: list[Path] = []
@@ -191,7 +206,8 @@ def main() -> int:
     plt.rcParams["ytick.labelsize"] = LABEL_FONT_SIZE
     plt.rcParams["legend.fontsize"] = LABEL_FONT_SIZE
 
-    compare_runs(args.files, args.title, args.output_file)
+    active_metrics = [(k, label) for k, label in METRICS if k in args.metrics]
+    compare_runs(args.files, args.title, args.output_file, active_metrics)
     return 0
 
 

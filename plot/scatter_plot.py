@@ -155,14 +155,6 @@ def plot_strong_scaling(run_paths: list[Path], title: str, output_file: Path, me
     """X-axis is GPU count; all runs must be the SAME model size."""
     runs = [load_run(p) for p in run_paths]
 
-    sizes_seen = {r.get("model_size") for r in runs if r.get("model_size") is not None}
-    if len(sizes_seen) > 1:
-        print(
-            f"error: strong-scaling plot requires a single model size, got: {sizes_seen}",
-            file=sys.stderr,
-        )
-        sys.exit(1)
-
     groups: dict[str, list[tuple[int, float]]] = {}
     for run, path in zip(runs, run_paths):
         g = num_gpus(run)
