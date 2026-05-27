@@ -80,3 +80,16 @@ python3 plot/scatter_plot.py --mode strong \
 ## bf16-scaling.png
 
 *(Superseded by `bf16-strong-scaling.png` — same data, earlier iteration.)*
+
+## fp8-vs-bf16-size-sweep
+Good coverage. BF16 has 5 sizes (125m, 760m, 1.5b, 3b, 8b), FP8 has 4 (760m, 1.5b, 3b, 8b). 
+
+Both "*MISSING* 350m; FP8 also missing 125m. Still a clean plot.
+
+python3 plot/scatter_plot.py --mode size-sweep \
+  -f fp8-vs-bf16-size-sweep/ \
+  --metric tokens_per_sec_per_gpu \
+  --ylabel "Tokens / sec / GPU" \
+  -t "FP8 vs BF16 throughput across model sizes (1 node, TP=1)" \
+  -o plots/fp8-vs-bf16-size-sweep.png
+
