@@ -1,28 +1,31 @@
 #!/bin/bash
 #
-# Usage: ./launch.sh <mode> <model_size> [steps] [nodes] [time]
+# Usage: ./launch.sh <mode> <model_size> [steps] [nodes] [time] [compile_mode]
 #
-# Modes:     throughput  (50 steps, with W&B)
-#            train       (N steps, with W&B and Tensorboard)
+# Modes:        throughput  (50 steps, with W&B)
+#               train       (N steps, with W&B and Tensorboard)
 #
-# Sizes:     125m, 350m, 760m, 1.5b, 3b, 8b
+# Sizes:        125m, 350m, 760m, 1.5b, 3b, 8b
 #
-# Steps:     required for train mode (e.g., 1000, 5000, 15000)
-# Nodes:     optional, default 4 (max 8)
-# Time:      optional SBATCH --time (HH:MM:SS), defaults per mode
+# Steps:        required for train mode (e.g., 1000, 5000, 15000)
+# Nodes:        optional, default 4 (max 8)
+# Time:         optional SBATCH --time (HH:MM:SS), defaults per mode
+# Compile mode: optional torch.compile mode, default 'default'
+#               (e.g., default, reduce-overhead, max-autotune, max-autotune-no-cudagraphs)
 #
 # Examples:  ./launch.sh throughput 760m
 #            ./launch.sh throughput 8b 50 1
 #            ./launch.sh train 760m 5000
 #            ./launch.sh train 1.5b 3000 8
 #            ./launch.sh train 1.5b 3000 8 04:00:00
+#            ./launch.sh train 1.5b 3000 8 04:00:00 max-autotune-no-cudagraphs
 
 set -euo pipefail
 
 source "$(dirname "$0")/config.sh"
 
-MODE=${1:?Usage: ./launch.sh <mode> <model_size> [steps] [nodes] [time]}
-MODEL_SIZE=${2:?Usage: ./launch.sh <mode> <model_size> [steps] [nodes] [time]}
+MODE=${1:?Usage: ./launch.sh <mode> <model_size> [steps] [nodes] [time] [compile_mode]}
+MODEL_SIZE=${2:?Usage: ./launch.sh <mode> <model_size> [steps] [nodes] [time] [compile_mode]}
 
 ################ Mode config ################
 case $MODE in
@@ -30,6 +33,7 @@ case $MODE in
         TRAINING_STEPS=${3:-50}
         NODES=${4:-4}
         TIME=${5:-00:30:00}
+        COMPILE_MODE=${6:-default}
         EVAL_INTERVAL=$TRAINING_STEPS
         EVAL_ITERS=0
         LR_WARMUP_ITERS=10
@@ -37,9 +41,10 @@ case $MODE in
         WANDB=true
         ;;
     train)
-        TRAINING_STEPS=${3:?Usage: ./launch.sh train <model_size> <steps> [nodes] [time]}
+        TRAINING_STEPS=${3:?Usage: ./launch.sh train <model_size> <steps> [nodes] [time] [compile_mode]}
         NODES=${4:-4}
         TIME=${5:-02:30:00}
+        COMPILE_MODE=${6:-default}
         EVAL_INTERVAL=1000
         EVAL_ITERS=10
         LR_WARMUP_ITERS=200
@@ -90,7 +95,7 @@ esac
 GBS=256
 SEQ_LEN=4096
 TOTAL_ITERS=$((TRAINING_STEPS + LR_WARMUP_ITERS))
-JOB_NAME="gipfel-${MODE}-${MODEL_SIZE}-${TRAINING_STEPS}s-${NODES}n"
+JOB_NAME="gipfel-${MODE}-${MODEL_SIZE}-${TRAINING_STEPS}s-${NODES}n-${COMPILE_MODE}"
 
 ################ W&B block ################
 if [ "$WANDB" = true ]; then
@@ -157,10 +162,11 @@ TRAINING_STEPS=${TRAINING_STEPS}
 TOTAL_ITERS=${TOTAL_ITERS}
 MODEL_SIZE=${MODEL_SIZE}
 MODE=${MODE}
+COMPILE_MODE=${COMPILE_MODE}
 
 # Logging
 PROJECT_NAME=gipfelsturm
-EXP_NAME=${MODE}-${MODEL_SIZE}-\${SLURM_NNODES}n
+EXP_NAME=${MODE}-${MODEL_SIZE}-\${SLURM_NNODES}n-${COMPILE_MODE}
 LOG_DIR=/iopsstor/scratch/cscs/\$USER/gipfelsturm/\$PROJECT_NAME/\$EXP_NAME
 TENSORBOARD_DIR=\$LOG_DIR/tensorboard
 CONFIGS
@@ -230,7 +236,7 @@ TRAINING_ARGS=(
     --manual-gc
     --manual-gc-interval 50
     --torch-compile
-    --torch-compile-mode default
+    --torch-compile-mode ${COMPILE_MODE}
 )
 
 REGULARIZATION_ARGS=(
