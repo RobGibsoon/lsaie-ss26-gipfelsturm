@@ -14,7 +14,7 @@ import scipy.stats as stats
 LABEL_FONT_SIZE = 9
 TITLE_FONT_SIZE = 10
 COLUMN_WIDTH = 8
-WARMUP_ITERS = 5  # skip first iters (compile/warmup spikes)
+WARMUP_ITERS = 10  # skip first iters (compile/warmup spikes)
 
 METRICS = [
     ("throughput", "Throughput (TFLOP/s/GPU)"),
