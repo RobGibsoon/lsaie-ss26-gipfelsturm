@@ -18,8 +18,11 @@ WARMUP_ITERS = 5  # skip first iters (compile/warmup spikes)
 
 METRICS = [
     ("throughput", "Throughput (TFLOP/s/GPU)"),
-    ("tokens_per_sec_per_gpu", "Tokens per second per GPU"),
 ]
+
+OPTIONAL_METRICS = {
+    "tokens": ("tokens_per_sec_per_gpu", "Tokens per second per GPU"),
+}
 
 
 def load_run(path: Path) -> dict:
@@ -101,6 +104,7 @@ def custom_violinplot(ax, data, pos, color):
     ci_min, ci_max = median_ci(arr)
     ax.hlines(pos, ci_min, ci_max, linestyle="-", lw=3, color=color)
 
+
 def get_name(run: dict, path: Path) -> str:
     if "name" in run:
         return run["name"]
@@ -109,26 +113,32 @@ def get_name(run: dict, path: Path) -> str:
     return path.stem
 
 
-def compare_runs(run_paths: list[Path], title: str, output_file: Path):
+def compare_runs(
+    run_paths: list[Path], title: str, output_file: Path, metrics: list[tuple[str, str]]
+):
+    # Sort by filename
+    run_paths = list(reversed(sorted(run_paths, key=lambda p: p.stem)))
     runs = [load_run(p) for p in run_paths]
     names = [get_name(r, p) for r, p in zip(runs, run_paths)]
-    colors = get_color_cycle()
+    color = get_color_cycle()[0]
 
-    n_metrics = len(METRICS)
+    n_metrics = len(metrics)
     fig, axes = plt.subplots(
         n_metrics, 1, figsize=(COLUMN_WIDTH, n_metrics * len(runs))
     )
     if n_metrics == 1:
         axes = [axes]
 
-    for ax, (key, label) in zip(axes, METRICS):
+    for i, run in enumerate(runs):
+        print(f"{names[i]}: {len(run.get(metrics[0][0], []))} iters")
+
+    for ax, (key, label) in zip(axes, metrics):
         for i, run in enumerate(runs):
             values = run.get(key, [])
             values = values[WARMUP_ITERS:] if len(values) > WARMUP_ITERS else values
             if not values:
                 continue
             pos = [i + 1]
-            color = colors[i % len(colors)]
             custom_violinplot(ax, values, pos, color)
 
         ax.set_yticks(
@@ -136,11 +146,13 @@ def compare_runs(run_paths: list[Path], title: str, output_file: Path):
         )
         ax.xaxis.grid(True)
         ax.yaxis.grid(False)
-        ax.set_title(label, fontsize=TITLE_FONT_SIZE, fontweight="bold", loc="left")
+        ax.set_title(label, fontsize=TITLE_FONT_SIZE, loc="left")
 
+    fig.tight_layout()
     if title:
+        fig.subplots_adjust(top=fig.subplotpars.top - 0.04)
         suptitle(fig, title)
-    
+
     fig.tight_layout()
     output_file.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(output_file, dpi=300, bbox_inches="tight")
@@ -165,6 +177,11 @@ def main() -> int:
         default=Path("plot.png"),
         help="File to save plot",
     )
+    ap.add_argument(
+        "--tokens",
+        action="store_true",
+        help="Include tokens per second per GPU plot",
+    )
     args = ap.parse_args()
 
     files: list[Path] = []
@@ -183,15 +200,20 @@ def main() -> int:
     args.files = files
 
     plt.style.use("seaborn-v0_8-darkgrid")
-    plt.rcParams["font.family"] = "sans-serif"
-    plt.rcParams["font.sans-serif"] = ["CMU Sans Serif"]
+    plt.rcParams["font.family"] = "serif"
+    plt.rcParams["font.serif"] = ["CMU Serif", "Computer Modern Roman", "DejaVu Serif"]
+    plt.rcParams["mathtext.fontset"] = "cm"
     plt.rcParams["font.weight"] = "medium"
     plt.rcParams["axes.unicode_minus"] = False
     plt.rcParams["xtick.labelsize"] = LABEL_FONT_SIZE
     plt.rcParams["ytick.labelsize"] = LABEL_FONT_SIZE
     plt.rcParams["legend.fontsize"] = LABEL_FONT_SIZE
 
-    compare_runs(args.files, args.title, args.output_file)
+    metrics = list(METRICS)
+    if args.tokens:
+        metrics.append(OPTIONAL_METRICS["tokens"])
+
+    compare_runs(args.files, args.title, args.output_file, metrics)
     return 0
 
 

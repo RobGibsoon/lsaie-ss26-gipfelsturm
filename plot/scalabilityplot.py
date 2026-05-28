@@ -164,8 +164,9 @@ def main() -> int:
             return 1
 
     plt.style.use("seaborn-v0_8-darkgrid")
-    plt.rcParams["font.family"] = "sans-serif"
-    plt.rcParams["font.sans-serif"] = ["CMU Sans Serif"]
+    plt.rcParams["font.family"] = "serif"
+    plt.rcParams["font.serif"] = ["CMU Serif", "Computer Modern Roman", "DejaVu Serif"]
+    plt.rcParams["mathtext.fontset"] = "cm"
     plt.rcParams["font.weight"] = "medium"
     plt.rcParams["axes.unicode_minus"] = False
     plt.rcParams["xtick.labelsize"] = LABEL_FONT_SIZE
