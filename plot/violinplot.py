@@ -201,7 +201,7 @@ def main() -> int:
 
     plt.style.use("seaborn-v0_8-darkgrid")
     plt.rcParams["font.family"] = "serif"
-    plt.rcParams["font.serif"] = ["CMU Serif", "Computer Modern Roman", "DejaVu Serif"]
+    plt.rcParams["font.serif"] = ["Times New Roman", "CMU Serif", "Computer Modern Roman", "DejaVu Serif"]
     plt.rcParams["mathtext.fontset"] = "cm"
     plt.rcParams["font.weight"] = "medium"
     plt.rcParams["axes.unicode_minus"] = False
