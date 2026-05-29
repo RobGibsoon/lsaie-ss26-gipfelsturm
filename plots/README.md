@@ -84,7 +84,7 @@ python3 plot/scatter_plot.py --mode strong \
 ## fp8-vs-bf16-size-sweep
 Good coverage. BF16 has 5 sizes (125m, 760m, 1.5b, 3b, 8b), FP8 has 4 (760m, 1.5b, 3b, 8b). 
 
-Both "*MISSING* 350m; FP8 also missing 125m. Still a clean plot.
+For some reason, when rerunning FP8 125m I had vastly different performance.
 
 python3 plot/scatter_plot.py --mode size-sweep \
   -f fp8-vs-bf16-size-sweep/ \
@@ -93,3 +93,8 @@ python3 plot/scatter_plot.py --mode size-sweep \
   -t "FP8 vs BF16 throughput across model sizes (1 node, TP=1)" \
   -o plots/fp8-vs-bf16-size-sweep.png
 
+## fp8-vs-bf16-val-loss
+
+Shows train performance of fp8 vs bf16 on 8b model.
+
+python3 plot/loss.py fp8-vs-bf16-val-loss/ -t "Progression of validation loss (8b parameters)" -o plots/fp8-vs-bf16-val-loss.png
