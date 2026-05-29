@@ -72,6 +72,8 @@ def main() -> int:
     ap.add_argument("log", type=Path, help="Path to log file")
     ap.add_argument("name", help="Legend name for this run")
     ap.add_argument("-o", "--output", type=Path, help="Output JSON path")
+    ap.add_argument("--model-size", help="Model size string (e.g. 8b, 760m) — written as 'model_size' for scatter_plot.py")
+    ap.add_argument("--num-gpus", type=int, help="Total GPU count — written as 'num_gpus' for scatter_plot.py --mode strong")
     args = ap.parse_args()
 
     if not args.log.is_file():
@@ -79,6 +81,10 @@ def main() -> int:
         return 1
 
     parsed = parse(args.log, args.name)
+    if args.model_size:
+        parsed["model_size"] = args.model_size
+    if args.num_gpus is not None:
+        parsed["num_gpus"] = args.num_gpus
     payload = json.dumps(parsed, indent=2)
     if args.output:
         args.output.write_text(payload)

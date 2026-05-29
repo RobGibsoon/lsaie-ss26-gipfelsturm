@@ -137,6 +137,7 @@ def compare_runs(
             values = run.get(key, [])
             values = values[WARMUP_ITERS:] if len(values) > WARMUP_ITERS else values
             if not values:
+                oom_positions.append(i + 1)
                 continue
             pos = [i + 1]
             custom_violinplot(ax, values, pos, color)
@@ -144,6 +145,11 @@ def compare_runs(
         ax.set_yticks(
             [i + 1 for i in range(len(runs))], names, fontsize=LABEL_FONT_SIZE
         )
+        for ypos in oom_positions:
+            xlim = ax.get_xlim()
+            x = xlim[0] + (xlim[1] - xlim[0]) * 0.02
+            ax.text(x, ypos, "OOM", va="center", ha="left",
+                    fontsize=LABEL_FONT_SIZE, color="crimson", fontweight="bold")
         ax.xaxis.grid(True)
         ax.yaxis.grid(False)
         ax.set_title(label, fontsize=TITLE_FONT_SIZE, loc="left")

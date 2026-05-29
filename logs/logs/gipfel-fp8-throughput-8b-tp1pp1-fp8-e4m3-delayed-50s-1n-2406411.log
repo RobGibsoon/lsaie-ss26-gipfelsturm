@@ -1,0 +1,66 @@
+START TIME: Wed May 27 11:47:50 AM CEST 2026
+/var/spool/slurmd/job2406411/slurm_script: line 38: cd: /iopsstor/scratch/cscs/course_00237/gipfelsturm/Megatron-LM: No such file or directory
+flock: cannot open lock file /iopsstor/scratch/cscs/course_00237/gipfelsturm/Megatron-LM/.git-lock: No such file or directory
+[Wed May 27 11:47:50 AM CEST 2026] WANDB enabled.
+CMD: torchrun --nproc-per-node 4 --nnodes 1 --rdzv_endpoint nid006245:25678 --rdzv_backend c10d --max_restarts 0 --tee 3 /iopsstor/scratch/cscs/course_00237/gipfelsturm/Megatron-LM/pretrain_gpt.py     --transformer-impl transformer_engine --use-precision-aware-optimizer --main-grads-dtype bf16     --num-layers 32 --hidden-size 4096 --ffn-hidden-size 14336 --num-attention-heads 32 --group-query-attention --num-query-groups 8 --max-position-embeddings 4096 --position-embedding-type rope --normalization RMSNorm --swiglu --untie-embeddings-and-output-weights --seq-length 4096     --micro-batch-size 1 --global-batch-size 256 --train-iters 50 --log-interval 1 --eval-interval 50 --eval-iters 0 --cross-entropy-loss-fusion --disable-bias-linear --optimizer adam --dataloader-type single --no-check-for-nan-in-loss-and-grad --manual-gc --manual-gc-interval 50     --attention-dropout 0.0 --hidden-dropout 0.0 --weight-decay 0.1 --clip-grad 1.0 --adam-beta1 0.9 --adam-beta2 0.95     --lr 3e-4 --lr-decay-style constant --lr-warmup-iters 10     --seed 42 --init-method-std 0.02     --bf16 --fp8-format e4m3 --fp8-recipe delayed --fp8-amax-history-len 16 --fp8-amax-compute-algo max     --tensor-model-parallel-size 1 --pipeline-model-parallel-size 1 --use-distributed-optimizer --overlap-grad-reduce --overlap-param-gather     --log-throughput --log-progress --log-timers-to-tensorboard     --tokenizer-type GPT2BPETokenizer --vocab-file /iopsstor/scratch/cscs/course_00237/gipfelsturm/data/gpt2-vocab.json --merge-file /iopsstor/scratch/cscs/course_00237/gipfelsturm/data/gpt2-merges.txt     --data-path /capstor/store/cscs/swissai/infra01/datasets/nvidia/Nemotron-ClimbMix/climbmix_small_megatron/climbmix_small --data-cache-path /iopsstor/scratch/cscs/course_00237/gipfelsturm/cache --split 99,1,0 --num-workers 1         --wandb-save-dir /iopsstor/scratch/cscs/course_00237/gipfelsturm/gipfelsturm/throughput-8b-tp1pp1-fp8-e4m3-delayed-1n         --wandb-project gipfelsturm         --wandb-exp-name throughput-8b-tp1pp1-fp8-e4m3-delayed-1n-2406411
+0: [default0]:/usr/bin/python: can't open file '/iopsstor/scratch/cscs/course_00237/gipfelsturm/Megatron-LM/pretrain_gpt.py': [Errno 2] No such file or directory
+0: [default1]:/usr/bin/python: can't open file '/iopsstor/scratch/cscs/course_00237/gipfelsturm/Megatron-LM/pretrain_gpt.py': [Errno 2] No such file or directory
+0: [default2]:/usr/bin/python: can't open file '/iopsstor/scratch/cscs/course_00237/gipfelsturm/Megatron-LM/pretrain_gpt.py': [Errno 2] No such file or directory
+0: [default3]:/usr/bin/python: can't open file '/iopsstor/scratch/cscs/course_00237/gipfelsturm/Megatron-LM/pretrain_gpt.py': [Errno 2] No such file or directory
+0: E0527 11:48:02.797000 26644 torch/distributed/elastic/multiprocessing/api.py:984] failed (exitcode: 2) local_rank: 0 (pid: 27116) of binary: /usr/bin/python
+0: Traceback (most recent call last):
+0:   File "/usr/local/bin/torchrun", line 7, in <module>
+0:     sys.exit(main())
+0:              ^^^^^^
+0:   File "/usr/local/lib/python3.12/dist-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 362, in wrapper
+0:     return f(*args, **kwargs)
+0:            ^^^^^^^^^^^^^^^^^^
+0:   File "/usr/local/lib/python3.12/dist-packages/torch/distributed/run.py", line 991, in main
+0:     run(args)
+0:   File "/usr/local/lib/python3.12/dist-packages/torch/distributed/run.py", line 982, in run
+0:     elastic_launch(
+0:   File "/usr/local/lib/python3.12/dist-packages/torch/distributed/launcher/api.py", line 170, in __call__
+0:     return launch_agent(self._config, self._entrypoint, list(args))
+0:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+0:   File "/usr/local/lib/python3.12/dist-packages/torch/distributed/launcher/api.py", line 317, in launch_agent
+0:     raise ChildFailedError(
+0: torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+0: ============================================================
+0: /iopsstor/scratch/cscs/course_00237/gipfelsturm/Megatron-LM/pretrain_gpt.py FAILED
+0: ------------------------------------------------------------
+0: Failures:
+0: [1]:
+0:   time      : 2026-05-27_11:48:02
+0:   host      : nid006245
+0:   rank      : 1 (local_rank: 1)
+0:   exitcode  : 2 (pid: 27117)
+0:   error_file: <N/A>
+0:   traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+0: [2]:
+0:   time      : 2026-05-27_11:48:02
+0:   host      : nid006245
+0:   rank      : 2 (local_rank: 2)
+0:   exitcode  : 2 (pid: 27118)
+0:   error_file: <N/A>
+0:   traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+0: [3]:
+0:   time      : 2026-05-27_11:48:02
+0:   host      : nid006245
+0:   rank      : 3 (local_rank: 3)
+0:   exitcode  : 2 (pid: 27119)
+0:   error_file: <N/A>
+0:   traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+0: ------------------------------------
+0: ------------------------
+0: Root Cause (first observed failure):
+0: [0]:
+0:   time      : 2026-05-27_11:48:02
+0:   host      : nid006245
+0:   rank      : 0 (local_rank: 0)
+0:   exitcode  : 2 (pid: 27116)
+0:   error_file: <N/A>
+0:   traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+0: ============================================================
+srun: error: nid006245: task 0: Exited with exit code 1
+srun: Terminating StepId=2406411.0
+END TIME: Wed May 27 11:48:03 AM CEST 2026
