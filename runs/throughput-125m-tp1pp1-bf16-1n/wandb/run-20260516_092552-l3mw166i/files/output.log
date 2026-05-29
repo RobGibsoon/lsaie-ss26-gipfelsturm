@@ -1,0 +1,28 @@
+WARNING: one_logger package is required to enable e2e metrics tracking. please go to https://confluence.nvidia.com/display/MLWFO/Package+Repositories for details to install it
+INFO:megatron.core.timers:(min, max) time across ranks (ms):
+    startup-program-entry-spread ...................: (1.35, 1.59)
+    startup-library-setup ..........................: (23735.45, 23737.04)
+    startup-program-setup ..........................: (48.54, 49.22)
+    startup-in-process-setup .......................: (0.00, 0.00)
+    startup-in-job-setup ...........................: (32.60, 35.25)
+    startup-initialize-megatron ....................: (16236.49, 16239.68)
+    startup-set-jit-fusion-options .................: (3981.57, 4157.13)
+    all-reduce-start-timestamps-tensor .............: (1.09, 176.64)
+    startup-megatron-init-local ....................: (20429.78, 20430.49)
+    startup-megatron-init-global ...................: (44216.03, 44216.14)
+[rank3]: Traceback (most recent call last):
+[rank3]:   File "/iopsstor/scratch/cscs/course_00149/lsaie-ss26-gipfelsturm/Megatron-LM/pretrain_gpt.py", line 342, in <module>
+[rank3]:     pretrain(
+[rank3]:   File "/iopsstor/scratch/cscs/course_00149/lsaie-ss26-gipfelsturm/Megatron-LM/megatron/training/training.py", line 903, in pretrain
+[rank3]:     model, optimizer, opt_param_scheduler = setup_model_and_optimizer(
+[rank3]:                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/iopsstor/scratch/cscs/course_00149/lsaie-ss26-gipfelsturm/Megatron-LM/megatron/training/training.py", line 1478, in setup_model_and_optimizer
+[rank3]:     opt_param_scheduler = get_optimizer_param_scheduler(optimizer)
+[rank3]:                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/iopsstor/scratch/cscs/course_00149/lsaie-ss26-gipfelsturm/Megatron-LM/megatron/training/training.py", line 1389, in get_optimizer_param_scheduler
+[rank3]:     opt_param_scheduler = OptimizerParamScheduler(
+[rank3]:                           ^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/iopsstor/scratch/cscs/course_00149/lsaie-ss26-gipfelsturm/Megatron-LM/megatron/core/optimizer_param_scheduler.py", line 157, in __init__
+[rank3]:     assert self.lr_warmup_steps < self.lr_decay_steps
+[rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]: AssertionError

@@ -1,0 +1,12 @@
+{"time":"2026-05-27T22:30:52.303990002+02:00","level":"INFO","msg":"stream: starting","core version":"0.25.0"}
+{"time":"2026-05-27T22:30:52.768432759+02:00","level":"INFO","msg":"stream: created new stream","id":"ipget7uv"}
+{"time":"2026-05-27T22:30:52.769047268+02:00","level":"INFO","msg":"handler: started","stream_id":"ipget7uv"}
+{"time":"2026-05-27T22:30:52.769838635+02:00","level":"INFO","msg":"writer: started","stream_id":"ipget7uv"}
+{"time":"2026-05-27T22:30:52.769838539+02:00","level":"INFO","msg":"stream: started","id":"ipget7uv"}
+{"time":"2026-05-27T22:30:52.769848619+02:00","level":"INFO","msg":"sender: started","stream_id":"ipget7uv"}
+{"time":"2026-05-27T22:36:16.4117495+02:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2026-05-27T22:36:16.660736977+02:00","level":"INFO","msg":"handler: operation stats","stats":{}}
+{"time":"2026-05-27T22:36:16.664426112+02:00","level":"INFO","msg":"stream: closing","id":"ipget7uv"}
+{"time":"2026-05-27T22:36:16.664476574+02:00","level":"INFO","msg":"handler: closed","stream_id":"ipget7uv"}
+{"time":"2026-05-27T22:36:16.664857714+02:00","level":"INFO","msg":"sender: closed","stream_id":"ipget7uv"}
+{"time":"2026-05-27T22:36:16.664902609+02:00","level":"INFO","msg":"stream: closed","id":"ipget7uv"}
