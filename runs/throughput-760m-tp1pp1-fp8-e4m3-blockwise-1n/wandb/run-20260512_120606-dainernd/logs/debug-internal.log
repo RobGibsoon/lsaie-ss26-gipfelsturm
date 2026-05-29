@@ -1,0 +1,12 @@
+{"time":"2026-05-12T12:06:07.312539956+02:00","level":"INFO","msg":"stream: starting","core version":"0.25.0"}
+{"time":"2026-05-12T12:06:07.763315126+02:00","level":"INFO","msg":"stream: created new stream","id":"dainernd"}
+{"time":"2026-05-12T12:06:07.763496017+02:00","level":"INFO","msg":"handler: started","stream_id":"dainernd"}
+{"time":"2026-05-12T12:06:07.764371095+02:00","level":"INFO","msg":"stream: started","id":"dainernd"}
+{"time":"2026-05-12T12:06:07.764374455+02:00","level":"INFO","msg":"writer: started","stream_id":"dainernd"}
+{"time":"2026-05-12T12:06:07.764383927+02:00","level":"INFO","msg":"sender: started","stream_id":"dainernd"}
+{"time":"2026-05-12T12:12:29.293083707+02:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2026-05-12T12:12:29.546418706+02:00","level":"INFO","msg":"handler: operation stats","stats":{}}
+{"time":"2026-05-12T12:12:29.552039186+02:00","level":"INFO","msg":"stream: closing","id":"dainernd"}
+{"time":"2026-05-12T12:12:29.552151791+02:00","level":"INFO","msg":"handler: closed","stream_id":"dainernd"}
+{"time":"2026-05-12T12:12:29.55255098+02:00","level":"INFO","msg":"sender: closed","stream_id":"dainernd"}
+{"time":"2026-05-12T12:12:29.552595842+02:00","level":"INFO","msg":"stream: closed","id":"dainernd"}

@@ -1,0 +1,123 @@
+WARNING: one_logger package is required to enable e2e metrics tracking. please go to https://confluence.nvidia.com/display/MLWFO/Package+Repositories for details to install it
+INFO:megatron.core.timers:(min, max) time across ranks (ms):
+    startup-program-entry-spread ...................: (0.09, 1.39)
+    startup-library-setup ..........................: (22578.48, 22579.99)
+    startup-program-setup ..........................: (46.87, 47.10)
+    startup-in-process-setup .......................: (0.00, 0.00)
+    startup-in-job-setup ...........................: (32.21, 33.83)
+    startup-initialize-megatron ....................: (17944.42, 17946.33)
+    startup-set-jit-fusion-options .................: (2256.13, 2768.30)
+    all-reduce-start-timestamps-tensor .............: (1.40, 513.41)
+    startup-megatron-init-local ....................: (20747.79, 20748.24)
+    startup-megatron-init-global ...................: (43374.88, 43374.99)
+INFO:megatron.core.timers:(min, max) time across ranks (ms):
+    model-and-optimizer-setup ......................: (1096.48, 1096.60)
+    train/valid/test-data-iterators-setup ..........: (19075.69, 19099.79)
+ [2026-05-12 12:07:10.955084] iteration        1/      50 | consumed samples:          256 | elapsed time per iteration (ms): 22213.2 | throughput per GPU (TFLOP/s/GPU): 546.8 | tokens/sec/GPU: 11801 | learning rate: 3.000000E-05 | global batch size:   256 | lm loss: 1.162200E+01 | loss scale: 1.0 | grad norm: 12.435 | number of skipped iterations:   0 | number of nan iterations:   0 |
+WARNING:megatron.core.utils:CUDA out of memory. Tried to allocate 1.54 GiB. GPU 3 has a total capacity of 95.00 GiB of which 1.01 GiB is free. Including non-PyTorch memory, this process has 93.98 GiB memory in use. Of the allocated memory 89.09 GiB is allocated by PyTorch, and 1.14 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+['Traceback (most recent call last):\n', '  File "/iopsstor/scratch/cscs/course_00237/lsaie-ss26-gipfelsturm/Megatron-LM/pretrain_gpt.py", line 197, in forward_step\n    output_tensor = model(\n                    ^^^^^^\n', '  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n', '  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1787, in _call_impl\n    return forward_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n', '  File "/iopsstor/scratch/cscs/course_00237/lsaie-ss26-gipfelsturm/Megatron-LM/megatron/core/distributed/data_parallel_base.py", line 22, in forward\n    return self.module(*inputs, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n', '  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n', '  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1882, in _call_impl\n    return inner()\n           ^^^^^^^\n', '  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1830, in inner\n    result = forward_call(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n', '  File "/iopsstor/scratch/cscs/course_00237/lsaie-ss26-gipfelsturm/Megatron-LM/megatron/core/transformer/module.py", line 489, in forward\n    outputs = self.module(*inputs, **kwargs)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n', '  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n', '  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1882, in _call_impl\n    return inner()\n           ^^^^^^^\n', '  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1830, in inner\n    result = forward_call(*args, **kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n', '  File "/iopsstor/scratch/cscs/course_00237/lsaie-ss26-gipfelsturm/Megatron-LM/megatron/core/models/gpt/gpt_model.py", line 539, in forward\n    return self._postprocess(\n           ^^^^^^^^^^^^^^^^^^\n', '  File "/iopsstor/scratch/cscs/course_00237/lsaie-ss26-gipfelsturm/Megatron-LM/megatron/core/models/gpt/gpt_model.py", line 714, in _postprocess\n    loss = self.compute_language_model_loss(labels, logits)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n', '  File "/iopsstor/scratch/cscs/course_00237/lsaie-ss26-gipfelsturm/Megatron-LM/megatron/core/models/common/language_module/language_module.py", line 165, in compute_language_model_loss\n    loss = fused_vocab_parallel_cross_entropy(logits, labels, self.pg_collection.tp)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n', '  File "/iopsstor/scratch/cscs/course_00237/lsaie-ss26-gipfelsturm/Megatron-LM/megatron/core/fusions/fused_cross_entropy.py", line 148, in fused_vocab_parallel_cross_entropy\n    return _VocabParallelCrossEntropy.apply(vocab_parallel_logits, target, tp_group)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n', '  File "/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py", line 583, in apply\n    return super().apply(*args, **kwargs)  # type: ignore[misc]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n', '  File "/iopsstor/scratch/cscs/course_00237/lsaie-ss26-gipfelsturm/Megatron-LM/megatron/core/fusions/fused_cross_entropy.py", line 93, in forward\n    vocab_parallel_logits, logits_max = calculate_logits_max(vocab_parallel_logits)\n                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n', '  File "/usr/local/lib/python3.12/dist-packages/torch/_dynamo/eval_frame.py", line 926, in compile_wrapper\n    return fn(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^\n', '  File "/iopsstor
+[rank3]: Traceback (most recent call last):
+[rank3]:   File "/iopsstor/scratch/cscs/course_00237/lsaie-ss26-gipfelsturm/Megatron-LM/pretrain_gpt.py", line 342, in <module>
+[rank3]:     pretrain(
+[rank3]:   File "/iopsstor/scratch/cscs/course_00237/lsaie-ss26-gipfelsturm/Megatron-LM/megatron/training/training.py", line 1031, in pretrain
+[rank3]:     iteration, num_floating_point_operations_so_far = train(
+[rank3]:                                                       ^^^^^^
+[rank3]:   File "/iopsstor/scratch/cscs/course_00237/lsaie-ss26-gipfelsturm/Megatron-LM/megatron/training/training.py", line 2801, in train
+[rank3]:     ) = train_step(
+[rank3]:         ^^^^^^^^^^^
+[rank3]:   File "/iopsstor/scratch/cscs/course_00237/lsaie-ss26-gipfelsturm/Megatron-LM/megatron/training/training.py", line 1652, in train_step
+[rank3]:     losses_reduced = forward_backward_func(
+[rank3]:                      ^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/iopsstor/scratch/cscs/course_00237/lsaie-ss26-gipfelsturm/Megatron-LM/megatron/core/pipeline_parallel/schedules.py", line 636, in forward_backward_no_pipelining
+[rank3]:     output_tensor, num_tokens = forward_step(
+[rank3]:                                 ^^^^^^^^^^^^^
+[rank3]:   File "/iopsstor/scratch/cscs/course_00237/lsaie-ss26-gipfelsturm/Megatron-LM/megatron/core/pipeline_parallel/schedules.py", line 423, in forward_step
+[rank3]:     output_tensor, loss_func = forward_step_func(data_iterator, model)
+[rank3]:                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/iopsstor/scratch/cscs/course_00237/lsaie-ss26-gipfelsturm/Megatron-LM/pretrain_gpt.py", line 197, in forward_step
+[rank3]:     output_tensor = model(
+[rank3]:                     ^^^^^^
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank3]:     return self._call_impl(*args, **kwargs)
+[rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank3]:     return forward_call(*args, **kwargs)
+[rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/iopsstor/scratch/cscs/course_00237/lsaie-ss26-gipfelsturm/Megatron-LM/megatron/core/distributed/data_parallel_base.py", line 22, in forward
+[rank3]:     return self.module(*inputs, **kwargs)
+[rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank3]:     return self._call_impl(*args, **kwargs)
+[rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1882, in _call_impl
+[rank3]:     return inner()
+[rank3]:            ^^^^^^^
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1830, in inner
+[rank3]:     result = forward_call(*args, **kwargs)
+[rank3]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/iopsstor/scratch/cscs/course_00237/lsaie-ss26-gipfelsturm/Megatron-LM/megatron/core/transformer/module.py", line 489, in forward
+[rank3]:     outputs = self.module(*inputs, **kwargs)
+[rank3]:               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank3]:     return self._call_impl(*args, **kwargs)
+[rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1882, in _call_impl
+[rank3]:     return inner()
+[rank3]:            ^^^^^^^
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1830, in inner
+[rank3]:     result = forward_call(*args, **kwargs)
+[rank3]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/iopsstor/scratch/cscs/course_00237/lsaie-ss26-gipfelsturm/Megatron-LM/megatron/core/models/gpt/gpt_model.py", line 539, in forward
+[rank3]:     return self._postprocess(
+[rank3]:            ^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/iopsstor/scratch/cscs/course_00237/lsaie-ss26-gipfelsturm/Megatron-LM/megatron/core/models/gpt/gpt_model.py", line 714, in _postprocess
+[rank3]:     loss = self.compute_language_model_loss(labels, logits)
+[rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/iopsstor/scratch/cscs/course_00237/lsaie-ss26-gipfelsturm/Megatron-LM/megatron/core/models/common/language_module/language_module.py", line 165, in compute_language_model_loss
+[rank3]:     loss = fused_vocab_parallel_cross_entropy(logits, labels, self.pg_collection.tp)
+[rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/iopsstor/scratch/cscs/course_00237/lsaie-ss26-gipfelsturm/Megatron-LM/megatron/core/fusions/fused_cross_entropy.py", line 148, in fused_vocab_parallel_cross_entropy
+[rank3]:     return _VocabParallelCrossEntropy.apply(vocab_parallel_logits, target, tp_group)
+[rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/torch/autograd/function.py", line 583, in apply
+[rank3]:     return super().apply(*args, **kwargs)  # type: ignore[misc]
+[rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/iopsstor/scratch/cscs/course_00237/lsaie-ss26-gipfelsturm/Megatron-LM/megatron/core/fusions/fused_cross_entropy.py", line 93, in forward
+[rank3]:     vocab_parallel_logits, logits_max = calculate_logits_max(vocab_parallel_logits)
+[rank3]:                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/torch/_dynamo/eval_frame.py", line 926, in compile_wrapper
+[rank3]:     return fn(*args, **kwargs)
+[rank3]:            ^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/iopsstor/scratch/cscs/course_00237/lsaie-ss26-gipfelsturm/Megatron-LM/megatron/core/fusions/fused_cross_entropy.py", line 12, in calculate_logits_max
+[rank3]:     @jit_fuser
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/torch/_dynamo/eval_frame.py", line 1154, in _fn
+[rank3]:     return fn(*args, **kwargs)
+[rank3]:            ^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/torch/_functorch/aot_autograd.py", line 1148, in forward
+[rank3]:     return compiled_fn(full_args)
+[rank3]:            ^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py", line 357, in runtime_wrapper
+[rank3]:     all_outs = call_func_at_runtime_with_args(
+[rank3]:                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/torch/_functorch/_aot_autograd/utils.py", line 134, in call_func_at_runtime_with_args
+[rank3]:     out = normalize_as_list(f(args))
+[rank3]:                             ^^^^^^^
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py", line 1962, in __call__
+[rank3]:     return self.compiled_fn(*args, **kwargs)
+[rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py", line 531, in wrapper
+[rank3]:     return compiled_fn(runtime_args)
+[rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py", line 729, in inner_fn
+[rank3]:     outs = compiled_fn(args)
+[rank3]:            ^^^^^^^^^^^^^^^^^
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/torch/_inductor/output_code.py", line 627, in __call__
+[rank3]:     return self.current_callable(inputs)
+[rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/torch/_inductor/utils.py", line 3247, in run
+[rank3]:     out = model(new_inputs)
+[rank3]:           ^^^^^^^^^^^^^^^^^
+[rank3]:   File "/iopsstor/scratch/cscs/course_00237/gipfelsturm/.inductor_cache/km/ckmhh4szygrssb5ql5jdwtcidnunys4ugnouapefvmead3k74orm.py", line 113, in call
+[rank3]:     buf0 = empty_strided_cuda((4096, 2, 50304), (100608, 50304, 1), torch.float32)
+[rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]: torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 1.54 GiB. GPU 3 has a total capacity of 95.00 GiB of which 1.01 GiB is free. Including non-PyTorch memory, this process has 93.98 GiB memory in use. Of the allocated memory 89.09 GiB is allocated by PyTorch, and 1.14 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)

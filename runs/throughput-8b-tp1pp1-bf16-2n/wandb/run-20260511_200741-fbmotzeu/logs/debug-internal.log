@@ -1,0 +1,12 @@
+{"time":"2026-05-11T20:07:42.298234779+02:00","level":"INFO","msg":"stream: starting","core version":"0.25.0"}
+{"time":"2026-05-11T20:07:42.750714449+02:00","level":"INFO","msg":"stream: created new stream","id":"fbmotzeu"}
+{"time":"2026-05-11T20:07:42.75134326+02:00","level":"INFO","msg":"handler: started","stream_id":"fbmotzeu"}
+{"time":"2026-05-11T20:07:42.752165409+02:00","level":"INFO","msg":"stream: started","id":"fbmotzeu"}
+{"time":"2026-05-11T20:07:42.752176897+02:00","level":"INFO","msg":"sender: started","stream_id":"fbmotzeu"}
+{"time":"2026-05-11T20:07:42.752176065+02:00","level":"INFO","msg":"writer: started","stream_id":"fbmotzeu"}
+{"time":"2026-05-11T20:18:34.091981315+02:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2026-05-11T20:18:34.38623328+02:00","level":"INFO","msg":"handler: operation stats","stats":{}}
+{"time":"2026-05-11T20:18:34.391295876+02:00","level":"INFO","msg":"stream: closing","id":"fbmotzeu"}
+{"time":"2026-05-11T20:18:34.391340066+02:00","level":"INFO","msg":"handler: closed","stream_id":"fbmotzeu"}
+{"time":"2026-05-11T20:18:34.391719063+02:00","level":"INFO","msg":"sender: closed","stream_id":"fbmotzeu"}
+{"time":"2026-05-11T20:18:34.39175407+02:00","level":"INFO","msg":"stream: closed","id":"fbmotzeu"}

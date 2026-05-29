@@ -1,0 +1,61 @@
+WARNING: one_logger package is required to enable e2e metrics tracking. please go to https://confluence.nvidia.com/display/MLWFO/Package+Repositories for details to install it
+INFO:megatron.core.timers:(min, max) time across ranks (ms):
+    startup-program-entry-spread ...................: (0.00, 1.42)
+    startup-library-setup ..........................: (21924.63, 21925.90)
+    startup-program-setup ..........................: (48.71, 49.16)
+    startup-in-process-setup .......................: (0.00, 0.00)
+    startup-in-job-setup ...........................: (32.57, 34.18)
+    startup-initialize-megatron ....................: (8152.47, 8154.48)
+    startup-set-jit-fusion-options .................: (2564.94, 2807.67)
+    all-reduce-start-timestamps-tensor .............: (1.11, 243.90)
+    startup-megatron-init-local ....................: (10995.55, 10996.01)
+    startup-megatron-init-global ...................: (32970.60, 32970.61)
+INFO:megatron.core.timers:(min, max) time across ranks (ms):
+    model-and-optimizer-setup ......................: (2097.53, 2097.69)
+    train/valid/test-data-iterators-setup ..........: (29500.36, 29520.14)
+[rank3]: Traceback (most recent call last):
+[rank3]:   File "/iopsstor/scratch/cscs/course_00237/lsaie-ss26-gipfelsturm/Megatron-LM/pretrain_gpt.py", line 342, in <module>
+[rank3]:     pretrain(
+[rank3]:   File "/iopsstor/scratch/cscs/course_00237/lsaie-ss26-gipfelsturm/Megatron-LM/megatron/training/training.py", line 1031, in pretrain
+[rank3]:     iteration, num_floating_point_operations_so_far = train(
+[rank3]:                                                       ^^^^^^
+[rank3]:   File "/iopsstor/scratch/cscs/course_00237/lsaie-ss26-gipfelsturm/Megatron-LM/megatron/training/training.py", line 2801, in train
+[rank3]:     ) = train_step(
+[rank3]:         ^^^^^^^^^^^
+[rank3]:   File "/iopsstor/scratch/cscs/course_00237/lsaie-ss26-gipfelsturm/Megatron-LM/megatron/training/training.py", line 1703, in train_step
+[rank3]:     update_successful, grad_norm, num_zeros_in_grad = optimizer.step()
+[rank3]:                                                       ^^^^^^^^^^^^^^^^
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank3]:     return func(*args, **kwargs)
+[rank3]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/iopsstor/scratch/cscs/course_00237/lsaie-ss26-gipfelsturm/Megatron-LM/megatron/core/optimizer/optimizer.py", line 1336, in step
+[rank3]:     update_successful = self.step_with_ready_grads()
+[rank3]:                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank3]:     return func(*args, **kwargs)
+[rank3]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/iopsstor/scratch/cscs/course_00237/lsaie-ss26-gipfelsturm/Megatron-LM/megatron/core/optimizer/optimizer.py", line 1246, in step_with_ready_grads
+[rank3]:     success &= optimizer.step_with_ready_grads()
+[rank3]:                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank3]:     return func(*args, **kwargs)
+[rank3]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/iopsstor/scratch/cscs/course_00237/lsaie-ss26-gipfelsturm/Megatron-LM/megatron/core/optimizer/distrib_optimizer.py", line 2603, in step_with_ready_grads
+[rank3]:     update_successful = super().step_with_ready_grads()
+[rank3]:                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[rank3]:     return func(*args, **kwargs)
+[rank3]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/iopsstor/scratch/cscs/course_00237/lsaie-ss26-gipfelsturm/Megatron-LM/megatron/core/optimizer/optimizer.py", line 569, in step_with_ready_grads
+[rank3]:     self.optimizer.step()
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/torch/optim/optimizer.py", line 526, in wrapper
+[rank3]:     out = func(*args, **kwargs)
+[rank3]:           ^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/transformer_engine/pytorch/optimizers/fused_adam.py", line 729, in step
+[rank3]:     apply_multi_tensor_adam(self.multi_tensor_adam_fp8, tensor_lists, out_dtype)
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/transformer_engine/pytorch/optimizers/fused_adam.py", line 630, in apply_multi_tensor_adam
+[rank3]:     multi_tensor_applier(
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/transformer_engine/pytorch/optimizers/multi_tensor_apply.py", line 21, in __call__
+[rank3]:     return op(self.chunk_size, noop_flag_buffer, tensor_lists, *args)
+[rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]: RuntimeError: /workspace/TransformerEngine/transformer_engine/common/multi_tensor/adam.cu:779 in function multi_tensor_adam_fp8_cuda: Assertion failed: tensor_lists[4][j]->dtype() == DType::kFloat32. Master param tensor 0 has dtype=Int16, but expected dtype=Float32
