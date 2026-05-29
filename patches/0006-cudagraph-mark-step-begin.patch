@@ -1,52 +1,31 @@
 # Patch: Disable Dynamo on TEDotProductAttention.forward to prevent nested CUDA graphs
 #
 # Problem:
-# - --torch-compile-mode reduce-overhead compiles the whole model with CUDA
-#   graph capture.  TEDotProductAttention.forward is NOT decorated with
-#   @torch.compiler.disable in Megatron — only the parent class
-#   (te.pytorch.DotProductAttention) disables its own body via
-#   nonrecursive_disable_wrapper (recursive=False).  With recursive=False,
-#   callees of that body are still compiled by the outer Dynamo context, so
-#   fused_attention gets its own separate reduce-overhead CUDA graph (visible
-#   in tracebacks as eval_frame.py:_fn → backends.py).
+#   With --torch-compile-mode reduce-overhead the whole model is compiled under
+#   CUDA graph capture.  te.pytorch.DotProductAttention disables its own body
+#   via nonrecursive_disable_wrapper(recursive=False), but callees remain
+#   visible to the outer Dynamo context.  fused_attention therefore gets its
+#   own reduce-overhead CUDA graph and is replayed once per transformer layer.
+#   Each replay overwrites the same static cu_seqlens_q buffer, raising:
 #
-# - fused_attention's CUDA graph is replayed once per transformer layer —
-#   24 times in a 24-layer model within a single microbatch forward pass.
-#   Each replay overwrites the same static buffer that backs cu_seqlens_q
-#   (created via torch.arange() in _get_cu_seqlens).  After the second
-#   layer's replay PyTorch raises:
-#
-#     RuntimeError: Error: accessing tensor output of CUDAGraphs that has been
+#     RuntimeError: accessing tensor output of CUDAGraphs that has been
 #     overwritten by a subsequent run. [...] call
 #     torch.compiler.cudagraph_mark_step_begin() before each model invocation.
 #
-# Why mark_step_begin() cannot fix this:
-# - Per-microbatch call (schedules.py): too coarse — the flag is cleared once
-#   before layer 1, but layer 2's replay immediately sets "overwritten" again.
-# - Per-layer call (inside TEDotProductAttention.forward): too fine — it is a
-#   global signal that also clears liveness flags for outer subgraph outputs
-#   (e.g. the embedding CUDA graph output), causing Dynamo guard failures and
-#   an InternalTorchDynamoError on the next recompilation attempt.
+#   mark_step_begin() cannot fix this: calling it per-microbatch is too coarse
+#   (flag is cleared once but overwritten again at layer 2), and calling it
+#   per-layer clears liveness flags for outer subgraph outputs, causing
+#   InternalTorchDynamoError on the next recompilation.
 #
 # What this patch does:
-# - Adds @torch._dynamo.disable to TEDotProductAttention.forward.  Dynamo
-#   creates a graph break at every call to core_attention, so fused_attention
-#   runs in eager mode (no CUDA graph, no static cu_seqlens_q buffer).
-# - The QKV projection and output projection that flank core_attention inside
-#   SelfAttention.forward are still captured in the outer CUDA graph, so
-#   the reduce-overhead benefit is preserved for the linear layers.
-# - fused_attention (flash attention / TE fused kernel) is already a single
-#   large pre-compiled kernel; the CUDA-graph overhead it avoids is only the
-#   Python dispatch cost (~microseconds), negligible vs. kernel runtime.
+#   Adds @torch._dynamo.disable to TEDotProductAttention.forward.  Dynamo
+#   breaks at each core_attention call so fused_attention runs eagerly (no CUDA
+#   graph, no static cu_seqlens_q buffer).  The QKV and output projections in
+#   SelfAttention.forward stay in the outer CUDA graph.  fused_attention is a
+#   single large pre-compiled kernel; the Python dispatch overhead it forgoes
+#   is negligible.
 #
-# Scope:
-#   Only needed with --torch-compile-mode reduce-overhead.
-#   No effect with default or max-autotune-no-cudagraphs (no CUDA graphs).
-#
-# Usage:
-#   Apply this patch together with 0005-torch-compile-whole-model.patch and use
-#     --torch-compile --torch-compile-mode reduce-overhead
-#
+# Only needed with --torch-compile-mode reduce-overhead.
 diff --git a/megatron/core/extensions/transformer_engine.py b/megatron/core/extensions/transformer_engine.py
 index ef8527e9e..5383bf971 100644
 --- a/megatron/core/extensions/transformer_engine.py
