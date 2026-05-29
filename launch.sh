@@ -131,6 +131,7 @@ cat >> "$SCRIPT" << SBATCH_DIRECTIVES
 #SBATCH --cpus-per-task=288
 #SBATCH --mem=460000
 #SBATCH --no-requeue
+#SBATCH --container-writable
 SBATCH_DIRECTIVES
 
 cat >> "$SCRIPT" << 'BODY_HEAD'
@@ -170,6 +171,18 @@ cat >> "$SCRIPT" << 'SETUP'
 #########################################
 
 mkdir -p logs $LOG_DIR $TENSORBOARD_DIR $DATASET_CACHE_DIR
+
+# Add liger kernels to PYTHONPATH if they exist
+SITE_PACKAGES=/iopsstor/scratch/cscs/$USER/gipfelsturm/site-packages
+if [ -d "$SITE_PACKAGES/liger_kernel" ]; then
+    export PYTHONPATH=$SITE_PACKAGES:$PYTHONPATH
+fi
+
+# Remove stale inductor cache if it is present
+INDUCTOR_CACHE=/iopsstor/scratch/cscs/$USER/gipfelsturm/.inductor_cache/
+if [ -d "$INDUCTOR_CACHE" ]; then
+    rm -rf "$INDUCTOR_CACHE"
+fi
 
 cd $MEGATRON_LM_DIR
 flock $MEGATRON_LM_DIR/.git-lock bash -c "cd $MEGATRON_LM_DIR && git checkout -- . && git apply $WORKDIR/patches/*.patch"
