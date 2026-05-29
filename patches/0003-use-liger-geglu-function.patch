@@ -1,3 +1,12 @@
+# Patch: Use liger geglu functions in GeGLUFunction
+#
+# Problem:
+# - The default GeGLU implementation relies on the JIT fuser, which may produce suboptimal
+# kernels compared to hand-tuned Triton implementations.
+#
+# What this patch does:
+# - It uses the geglu_forward and geglu_backward functions in the GeGLUFunction to try and improve the
+# throughput.
 diff --git a/megatron/core/fusions/fused_bias_geglu.py b/megatron/core/fusions/fused_bias_geglu.py
 index 7a7fbe7f9..04ecf3965 100644
 --- a/megatron/core/fusions/fused_bias_geglu.py

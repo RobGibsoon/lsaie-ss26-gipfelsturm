@@ -1,3 +1,12 @@
+# Patch: Use LigerRMSNorm in WrappedTorchNorm
+#
+# Problem:
+# - The default RMSNorm implementation relies on PyTorch's built-in kernel, which may be
+# suboptimal compared to a hand-tuned Triton implementation.
+#
+# What this patch does:
+# - It replaces torch.nn.RMSNorm with LigerRMSNorm in WrappedTorchNorm to try and improve the
+# throughput. Also removes the PyTorch >= 2.4.0 version assertion that is no longer needed.
 diff --git a/megatron/core/transformer/torch_norm.py b/megatron/core/transformer/torch_norm.py
 index d0ceca7af..1c686a2b2 100644
 --- a/megatron/core/transformer/torch_norm.py
