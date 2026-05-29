@@ -87,7 +87,7 @@ def plot_comparison(files: list[Path], title: str, output_file: Path):
     # Top Panel
     ax_curve.set_title("Validation Loss Trajectory (Smoothed)", fontweight="bold", fontsize=TITLE_FONT_SIZE)
     ax_curve.set_xlabel("Iteration", fontsize=LABEL_FONT_SIZE)
-    ax_curve.set_ylabel("LM Loss", fontsize=LABEL_FONT_SIZE)
+    ax_curve.set_ylabel("Val Loss", fontsize=LABEL_FONT_SIZE)
     ax_curve.legend(loc="upper right")
 
     # Bottom Left Panel
@@ -104,7 +104,7 @@ def plot_comparison(files: list[Path], title: str, output_file: Path):
                     f'{int(width)}', ha='right', va='center', color='white', fontweight='bold')
 
     # Bottom Right Panel
-    parts = ax_violin.violinplot(final_losses, showmeans=True, showextrema=True)
+    parts = ax_violin.violinplot(final_losses, showmeans=True, showextrema=True, orientation="horizontal")
     for pc, color in zip(parts['bodies'], run_colors):
         pc.set_facecolor(color)
         pc.set_alpha(0.6)
@@ -113,10 +113,10 @@ def plot_comparison(files: list[Path], title: str, output_file: Path):
         vp.set_edgecolor('black')
         vp.set_linewidth(1)
 
-    ax_violin.set_xticks(np.arange(1, len(run_names) + 1))
-    ax_violin.set_xticklabels(run_names, fontweight="bold")
+    ax_violin.set_yticks(np.arange(1, len(run_names) + 1))
+    ax_violin.set_yticklabels(run_names, fontweight="bold")
     ax_violin.set_title("Loss Distribution (Final 10%)", fontweight="bold", fontsize=TITLE_FONT_SIZE)
-    ax_violin.set_ylabel("Loss Values", fontsize=LABEL_FONT_SIZE)
+    ax_violin.set_xlabel("Loss Values", fontsize=LABEL_FONT_SIZE)
 
     if title:
         fig.suptitle(title, fontsize=TITLE_FONT_SIZE + 2, fontweight="bold", y=0.98)
