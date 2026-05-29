@@ -153,6 +153,7 @@ def compare_runs(
         fig.subplots_adjust(top=fig.subplotpars.top - 0.03)
         suptitle(fig, title)
 
+    fig.tight_layout()
     output_file.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(output_file, dpi=300, bbox_inches="tight")
     print(f"saved {output_file}")

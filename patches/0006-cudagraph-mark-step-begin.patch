@@ -1,0 +1,46 @@
+# Patch: Disable Dynamo on TEDotProductAttention.forward to prevent nested CUDA graphs
+#
+# Problem:
+#   With --torch-compile-mode reduce-overhead the whole model is compiled under
+#   CUDA graph capture.  te.pytorch.DotProductAttention disables its own body
+#   via nonrecursive_disable_wrapper(recursive=False), but callees remain
+#   visible to the outer Dynamo context.  fused_attention therefore gets its
+#   own reduce-overhead CUDA graph and is replayed once per transformer layer.
+#   Each replay overwrites the same static cu_seqlens_q buffer, raising:
+#
+#     RuntimeError: accessing tensor output of CUDAGraphs that has been
+#     overwritten by a subsequent run. [...] call
+#     torch.compiler.cudagraph_mark_step_begin() before each model invocation.
+#
+#   mark_step_begin() cannot fix this: calling it per-microbatch is too coarse
+#   (flag is cleared once but overwritten again at layer 2), and calling it
+#   per-layer clears liveness flags for outer subgraph outputs, causing
+#   InternalTorchDynamoError on the next recompilation.
+#
+# What this patch does:
+#   Adds @torch._dynamo.disable to TEDotProductAttention.forward.  Dynamo
+#   breaks at each core_attention call so fused_attention runs eagerly (no CUDA
+#   graph, no static cu_seqlens_q buffer).  The QKV and output projections in
+#   SelfAttention.forward stay in the outer CUDA graph.  fused_attention is a
+#   single large pre-compiled kernel; the Python dispatch overhead it forgoes
+#   is negligible.
+#
+# Only needed with --torch-compile-mode reduce-overhead.
+diff --git a/megatron/core/extensions/transformer_engine.py b/megatron/core/extensions/transformer_engine.py
+index ef8527e9e..5383bf971 100644
+--- a/megatron/core/extensions/transformer_engine.py
++++ b/megatron/core/extensions/transformer_engine.py
+@@ -1330,6 +1330,13 @@ class TEDotProductAttention(te.pytorch.DotProductAttention):
+             **extra_kwargs,
+         )
+
++    # Disable Dynamo tracing on this method so that fused_attention (called via
++    # super().forward()) does not get compiled into its own reduce-overhead CUDA
++    # graph.  Without this, fused_attention's static cu_seqlens_q buffer is
++    # overwritten on every successive layer call within a single forward pass,
++    # causing a RuntimeError.  The QKV and output projections that flank this
++    # call in SelfAttention.forward are still captured in the outer CUDA graph.
++    @torch._dynamo.disable
+     def forward(
+         self,
+         query: Tensor,
