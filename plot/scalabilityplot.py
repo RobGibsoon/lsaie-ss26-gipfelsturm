@@ -14,7 +14,7 @@ import numpy as np
 LABEL_FONT_SIZE = 9
 TITLE_FONT_SIZE = 10
 COLUMN_WIDTH = 6
-WARMUP_ITERS = 5
+WARMUP_ITERS = 10
 
 SIZE_TO_PARAMS = {
     "125m": 125e6,
@@ -164,8 +164,9 @@ def main() -> int:
             return 1
 
     plt.style.use("seaborn-v0_8-darkgrid")
-    plt.rcParams["font.family"] = "sans-serif"
-    plt.rcParams["font.sans-serif"] = ["CMU Sans Serif"]
+    plt.rcParams["font.family"] = "serif"
+    plt.rcParams["font.serif"] = ["Times New Roman", "CMU Serif", "Computer Modern Roman", "DejaVu Serif"]
+    plt.rcParams["mathtext.fontset"] = "cm"
     plt.rcParams["font.weight"] = "medium"
     plt.rcParams["axes.unicode_minus"] = False
     plt.rcParams["xtick.labelsize"] = LABEL_FONT_SIZE
